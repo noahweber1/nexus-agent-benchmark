@@ -1,0 +1,1 @@
+I have a completed pressure vessel nozzle analysis. Need the ASME VIII Div 2 Part 5 assessment — stress linearization at the nozzle junction, all the categories, and tell me if it passes code. Design pressure is 3.5 MPa at 250C.

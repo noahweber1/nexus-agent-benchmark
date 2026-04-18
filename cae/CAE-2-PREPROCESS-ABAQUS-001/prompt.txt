@@ -1,0 +1,1 @@
+I have a meshed flanged pipe joint — 1/8 sector with a gasket. Need to set up the full analysis: bolt up first, then pressure at 15 MPa, then a bending load of 5 kN-m. Gasket test data is in the CSV. Can you get this ready to run?

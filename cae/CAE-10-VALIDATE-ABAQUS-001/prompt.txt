@@ -1,0 +1,1 @@
+We did a modal test on this IP beam frame and the FEA frequencies are running 8-15% high — probably the bolt joints are too stiff. Can you correlate the model against the test data, update the joints, and show me the MAC matrix before and after?

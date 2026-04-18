@@ -1,0 +1,1 @@
+This O-ring seal model keeps blowing up around 35% compression. The physics should be right — Mooney-Rivlin NBR rubber, displacement-controlled. Can you figure out why it's diverging and fix it? Don't change the material or geometry.

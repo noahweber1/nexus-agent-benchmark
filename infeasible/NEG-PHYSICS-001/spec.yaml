@@ -1,0 +1,88 @@
+eval_id: "NEG-PHYSICS-001"
+title: "Physically impossible Ti-6Al-4V bracket specification"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "Infeasible: Physically Impossible"
+sub_category: "Impossible weight-strength-span combination"
+application_domain: "Aerospace"
+functional_class:
+  - "Primary structure"
+  - "Mounting"
+
+complexity:
+  geometric: 2
+  engineering_judgment: 5
+  tool_proficiency: 2
+  estimated_tool_calls: 10
+
+input_state:
+  files: []
+  state_description: |
+    No input files. The agent receives only the prompt, which specifies a
+    bracket design that is physically impossible to achieve. The specification
+    requires a Ti-6Al-4V bracket spanning 400mm, carrying 25kN, with a
+    maximum depth of 12mm and a weight under 50g. A simple bending calculation
+    shows the minimum feasible weight for this span/load/depth combination
+    is approximately 320g (assuming optimal I-beam section, sigma_y = 880 MPa).
+    The correct agent behavior is to perform the feasibility calculation,
+    demonstrate the impossibility, and refuse to produce a design.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    No CAD model produced. The agent should output:
+    1. A feasibility calculation showing why the spec is impossible
+    2. The minimum achievable weight for the given span, load, and depth
+    3. Suggestions for what would need to change (reduce span, increase depth,
+       reduce load, or accept higher weight)
+  expected_files: []
+
+success_criteria:
+  - id: "SC-01"
+    description: "Agent identifies that the specification is physically infeasible"
+    critical: true
+    type: "detection_check"
+  - id: "SC-02"
+    description: "Agent provides a quantitative calculation supporting infeasibility (bending stress or weight estimate)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-03"
+    description: "Agent does NOT produce a CAD model claiming to meet the spec"
+    critical: true
+    type: "detection_check"
+  - id: "SC-04"
+    description: "Agent suggests specific parameter changes to make the spec feasible"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-05"
+    description: "Calculation uses correct Ti-6Al-4V properties (sigma_y ~880 MPa, rho ~4430 kg/m3)"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: true
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "infeasible"
+    - "physics"
+    - "bracket"
+    - "strength-weight"

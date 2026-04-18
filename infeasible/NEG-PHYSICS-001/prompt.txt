@@ -1,0 +1,1 @@
+I need a titanium mounting bracket — 400mm span, needs to take 25kN, max 12mm deep because of the clearance envelope. Keep it under 50g if you can, it's for an instrument panel. Give me a SolidWorks model.

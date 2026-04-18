@@ -1,0 +1,123 @@
+eval_id: "CAE-6-CONVERGENCE-COMSOL-001"
+title: "Mesh convergence study at shoulder fillet of stepped shaft"
+version: "1.0"
+status: "draft"
+
+target_tool: "COMSOL Multiphysics 6.2"
+category: "CAE-6: Mesh Convergence & Verification Studies"
+sub_category: "h-refinement convergence with analytical comparison"
+application_domain: "Power transmission"
+functional_class:
+  - "Power transmission"
+  - "Rotating component"
+
+complexity:
+  geometric: 2
+  engineering_judgment: 4
+  tool_proficiency: 3
+  estimated_tool_calls: 30
+
+input_state:
+  files:
+    - name: "stepped_shaft.mph"
+      format: "COMSOL Multiphysics"
+      description: "COMSOL model of stepped shaft with geometry, material, and loads defined. No mesh."
+  state_description: |
+    A 2D axisymmetric model of a stepped shaft in COMSOL. Geometry:
+    - Large diameter: 60mm, small diameter: 40mm
+    - Shoulder fillet radius: 4mm
+    - Shaft length: 200mm (100mm each side of step)
+    - Material: AISI 4140 steel (E=210GPa, nu=0.3)
+    - Loading: pure bending moment of 500 N·m applied at the free end
+    - Fixed support at the other end
+    The model has physics (Solid Mechanics) and boundary conditions defined
+    but no mesh. The agent must create 5 mesh refinement levels, run each,
+    extract peak stress at the fillet, plot convergence, compute Richardson
+    extrapolation, and compare against Peterson's Kt factor.
+    Peterson's Kt for D/d=1.5, r/d=0.1: approximately 1.72.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Five mesh refinement levels solved, peak stress at fillet extracted for each.
+    Convergence plot (stress vs. 1/element_size or DOF count). Richardson
+    extrapolation applied to estimate the true stress. Error estimation for each
+    mesh level. Comparison of the converged FEA stress concentration factor
+    against Peterson's Kt=1.72. Report table with mesh level, element count,
+    peak stress, % change, and estimated error.
+  expected_files:
+    - name: "convergence_report.pdf"
+      format: "PDF"
+      description: "Convergence study report with plots and tables."
+    - name: "convergence_data.csv"
+      format: "CSV"
+      description: "Raw data: mesh level, element count, DOF, peak stress, nominal stress, Kt."
+
+success_criteria:
+  - id: "SC-01"
+    description: "5 distinct mesh refinement levels created and solved"
+    critical: true
+    type: "count_check"
+  - id: "SC-02"
+    description: "Mesh refinement is local to the fillet region (not uniform global refinement)"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "Peak stress extracted at the same location (fillet root) for all 5 levels"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-04"
+    description: "Convergence plot shows monotonic convergence (stress approaching asymptote)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "Richardson extrapolation applied correctly to estimate true stress"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Computed Kt within 5% of Peterson's value (1.72 +/- 0.086)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Finest mesh shows less than 2% change from previous level"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Report includes convergence plot with labeled axes and data points"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-09"
+    description: "Report includes summary table with all mesh levels and metrics"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-10"
+    description: "Nominal bending stress correctly computed (M*c/I for the smaller diameter)"
+    critical: true
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "convergence"
+    - "mesh-study"
+    - "stress-concentration"
+    - "comsol"
+    - "verification"

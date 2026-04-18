@@ -1,0 +1,127 @@
+eval_id: "CAE-1-MESH-ANSA-001"
+title: "Mesh turbocharger compressor housing with geometry cleanup"
+version: "1.0"
+status: "draft"
+
+target_tool: "ANSA v24.1.0"
+category: "CAE-1: Meshing"
+sub_category: "Geometry cleanup and tet meshing"
+application_domain: "Automotive"
+functional_class:
+  - "Enclosure"
+  - "Fluid handling"
+  - "Rotating component"
+
+complexity:
+  geometric: 5
+  engineering_judgment: 4
+  tool_proficiency: 5
+  estimated_tool_calls: 65
+
+input_state:
+  files:
+    - name: "compressor_housing.stp"
+      format: "STEP AP214"
+      description: "Turbocharger compressor housing with known geometry defects from CAD translation."
+  state_description: |
+    A STEP file of an automotive turbocharger compressor housing. Single
+    solid body, approximately 120mm diameter x 95mm length. Features include
+    a volute scroll passage, diffuser section, inlet bellmouth, and 4-bolt
+    mounting flange. The STEP import has the following known defects:
+    - 15 sliver faces on the volute scroll (aspect ratio > 500:1)
+    - 3 gaps at the volute tongue region (up to 0.05mm)
+    - Multiple short edges (< 0.1mm) at fillet-to-surface transitions
+    The mesh targets are: Tet10 (second-order tetrahedral) elements,
+    minimum 3 elements through the thinnest wall section (2.5mm at volute
+    tongue), element quality Jacobian > 0.3, aspect ratio < 5:1. Local
+    refinement required at the volute tongue and diffuser vane roots.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    A clean, high-quality Tet10 mesh of the compressor housing. All geometry
+    defects repaired. Minimum 3 elements through thinnest wall. Quality metrics
+    met: Jacobian > 0.3, aspect ratio < 5.0. Local refinement zones at volute
+    tongue (element size 0.3mm) and diffuser vane roots (element size 0.5mm).
+    Global element size 2.0mm. Total element count in range 500k-1.5M.
+    Mesh exported in both Nastran and Abaqus format.
+  expected_files:
+    - name: "compressor_housing.bdf"
+      format: "Nastran bulk data"
+      description: "Nastran format mesh file."
+    - name: "compressor_housing.inp"
+      format: "Abaqus input"
+      description: "Abaqus format mesh file."
+
+success_criteria:
+  - id: "SC-01"
+    description: "All 15 sliver faces removed or replaced"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "All 3 gaps at volute tongue closed"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "Short edges (< 0.1mm) eliminated or collapsed"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-04"
+    description: "Minimum 3 Tet10 elements through thinnest wall (2.5mm)"
+    critical: true
+    type: "count_check"
+  - id: "SC-05"
+    description: "Element quality: Jacobian > 0.3 for all elements"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Element quality: aspect ratio < 5.0 for >= 99% of elements"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Local refinement at volute tongue (element size <= 0.3mm)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Local refinement at diffuser vane roots (element size <= 0.5mm)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-09"
+    description: "Total element count between 500k and 1.5M"
+    critical: false
+    type: "count_check"
+  - id: "SC-10"
+    description: "Mesh exported in both Nastran and Abaqus formats without errors"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-11"
+    description: "No free edges or T-connections in the surface mesh"
+    critical: true
+    type: "geometry_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "meshing"
+    - "ansa"
+    - "turbocharger"
+    - "geometry-cleanup"
+    - "tet10"

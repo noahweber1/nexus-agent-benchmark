@@ -1,0 +1,1 @@
+This turbocharger compressor housing came in as a STEP and the geometry is pretty rough — slivers, gaps, the usual. Can you clean it up and mesh it for structural analysis? Needs to be good quality, especially around the volute tongue and diffuser vane roots. Export as Nastran and Abaqus when you're done.

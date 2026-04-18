@@ -1,0 +1,1 @@
+This gearbox assembly is a mess — everything's flat at the top level, 87 parts with no sub-assemblies. Can you restructure it properly? I need an exploded view too.

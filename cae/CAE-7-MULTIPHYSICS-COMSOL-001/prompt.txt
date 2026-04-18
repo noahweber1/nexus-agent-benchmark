@@ -1,0 +1,1 @@
+This heatsink has 3 IGBTs at 120W each. I need to know if the junction temp stays under 125C and whether the base plate bows more than 50 microns. Set up the thermal and structural in COMSOL — forced air cooling, h around 45.

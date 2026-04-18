@@ -1,0 +1,24 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# CAD/CAE tool artifacts (lock files and backups generated during eval runs)
+*.SLDLFP.bak
+*.SLDPRT.bak
+*.SLDASM.bak
+~$*
+*.lck

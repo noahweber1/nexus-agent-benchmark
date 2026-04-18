@@ -1,0 +1,89 @@
+eval_id: "NEG-CONTRADICT-001"
+title: "Contradictory GD&T specification on shaft"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "Infeasible: Contradictory Constraints"
+sub_category: "Redundant GD&T controls"
+application_domain: "Rotating machinery"
+functional_class:
+  - "Rotating component"
+  - "Power transmission"
+
+complexity:
+  geometric: 2
+  engineering_judgment: 5
+  tool_proficiency: 3
+  estimated_tool_calls: 10
+
+input_state:
+  files:
+    - name: "shaft.SLDPRT"
+      format: "SLDPRT"
+      description: "Simple stepped shaft part file, no drawing or GD&T applied yet."
+  state_description: |
+    A simple stepped shaft in SolidWorks. 3 diameters: 25mm, 30mm, 35mm,
+    with fillets at transitions. Total length 200mm. The shaft has a keyway
+    on the 30mm section and a ground journal on the 25mm section.
+    The agent will be asked to apply GD&T that contains a logical contradiction.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    No drawing produced as specified. The agent should identify the contradiction:
+    cylindricity of 0.002mm controls form only, while total runout of 0.001mm
+    to the same datum axis controls both form and position. A total runout
+    tolerance tighter than the cylindricity tolerance makes the cylindricity
+    callout redundant at best and contradictory at worst (if the intent was
+    for cylindricity to be the tighter control). The agent should explain the
+    relationship and request clarification.
+  expected_files: []
+
+success_criteria:
+  - id: "SC-01"
+    description: "Agent identifies the contradiction between cylindricity 0.002 and total runout 0.001"
+    critical: true
+    type: "detection_check"
+  - id: "SC-02"
+    description: "Agent explains WHY it is contradictory (runout controls form tighter than cylindricity)"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-03"
+    description: "Agent does NOT apply the contradictory GD&T without flagging the issue"
+    critical: true
+    type: "detection_check"
+  - id: "SC-04"
+    description: "Agent suggests resolution (remove cylindricity, or tighten cylindricity below runout)"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-05"
+    description: "Explanation uses correct ASME Y14.5 terminology and concepts"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: true
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "infeasible"
+    - "gd&t"
+    - "contradictory"
+    - "asme-y14.5"

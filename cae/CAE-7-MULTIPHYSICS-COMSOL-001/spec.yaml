@@ -1,0 +1,131 @@
+eval_id: "CAE-7-MULTIPHYSICS-COMSOL-001"
+title: "Thermo-mechanical analysis of power electronics heatsink"
+version: "1.0"
+status: "draft"
+
+target_tool: "COMSOL Multiphysics 6.2"
+category: "CAE-7: Multi-Physics & Coupled Analysis"
+sub_category: "Conduction-convection-structural coupling"
+application_domain: "Electronics enclosure"
+functional_class:
+  - "Thermal management"
+  - "Mounting"
+  - "Electrical"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 4
+  tool_proficiency: 4
+  estimated_tool_calls: 45
+
+input_state:
+  files:
+    - name: "heatsink_assembly.mph"
+      format: "COMSOL Multiphysics"
+      description: "COMSOL model with heatsink geometry and IGBT footprints defined. No physics set up."
+  state_description: |
+    A 3D model of an aluminum finned heatsink (6063-T5) with 3 IGBT modules
+    mounted on the base plate. Geometry:
+    - Base plate: 150mm x 100mm x 8mm
+    - 12 fins: 40mm height, 1.5mm thickness, 10mm spacing
+    - 3 IGBT mounting pads: 30mm x 20mm each, 120W thermal dissipation per IGBT
+    - TIM (thermal interface material) layer: 0.1mm thick, k=5 W/m·K
+    - Mounting bolt holes (4x M5) on base plate corners
+    The model has geometry only. No physics, materials, boundary conditions,
+    or mesh are defined. The agent must set up a fully coupled thermo-mechanical
+    analysis: heat conduction through the heatsink, convection on fin surfaces,
+    thermal stress from differential expansion.
+    Performance targets: junction temperature < 125°C, base plate deflection < 0.05mm.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    A fully coupled thermo-mechanical COMSOL model:
+    1. Heat Transfer: conduction through base plate and fins, convective BC
+       (h=45 W/m2·K, T_amb=40°C) on all fin and exposed surfaces, 120W per
+       IGBT as heat source on mounting pads.
+    2. Solid Mechanics: thermal expansion from temperature field, fixed at
+       bolt hole locations, evaluate deflection.
+    Results show temperature distribution, thermal stress, and deflection.
+    Junction temp and deflection compared against targets.
+  expected_files:
+    - name: "heatsink_thermomech.mph"
+      format: "COMSOL Multiphysics"
+      description: "Complete coupled model with results."
+    - name: "thermal_report.pdf"
+      format: "PDF"
+      description: "Summary report with temperature contours, stress, deflection, and target comparison."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Heat source of 120W applied at each of 3 IGBT pads (360W total)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-02"
+    description: "Convection BC on all fin surfaces and exposed base plate (h=45 W/m2·K, T_amb=40°C)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-03"
+    description: "TIM layer modeled with k=5 W/m·K and correct thickness (0.1mm)"
+    critical: true
+    type: "property_check"
+  - id: "SC-04"
+    description: "Al 6063-T5 material with correct thermal and mechanical properties"
+    critical: false
+    type: "property_check"
+  - id: "SC-05"
+    description: "Thermal expansion coupling: temperature field drives structural deformation"
+    critical: true
+    type: "property_check"
+  - id: "SC-06"
+    description: "Fixed constraints at 4 bolt hole locations"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-07"
+    description: "Maximum junction temperature reported and compared against 125°C limit"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Maximum base plate deflection reported and compared against 0.05mm limit"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-09"
+    description: "Temperature contour plot included in report"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-10"
+    description: "Von Mises stress contour plot included in report"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-11"
+    description: "Mesh refined at TIM layer and IGBT pad regions"
+    critical: false
+    type: "geometry_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "multiphysics"
+    - "thermal"
+    - "structural"
+    - "heatsink"
+    - "comsol"
+    - "electronics"

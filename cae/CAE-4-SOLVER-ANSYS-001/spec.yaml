@@ -1,0 +1,117 @@
+eval_id: "CAE-4-SOLVER-ANSYS-001"
+title: "Debug diverging nonlinear analysis of rubber O-ring seal compression"
+version: "1.0"
+status: "draft"
+
+target_tool: "Ansys Mechanical 2024 R2"
+category: "CAE-4: Solver Configuration & Execution"
+sub_category: "Nonlinear convergence debugging"
+application_domain: "Sealing"
+functional_class:
+  - "Sealing"
+
+complexity:
+  geometric: 2
+  engineering_judgment: 5
+  tool_proficiency: 4
+  estimated_tool_calls: 35
+
+input_state:
+  files:
+    - name: "oring_seal.wbpz"
+      format: "Ansys Workbench project"
+      description: "Ansys Mechanical project with O-ring seal model that diverges at 35% load."
+  state_description: |
+    An axisymmetric model of a rubber O-ring seal being compressed between two
+    steel surfaces (gland and shaft). O-ring cross-section: 3.53mm (AS568-214).
+    Groove depth: 2.85mm (24% compression). Material: NBR 70 Shore A, modeled
+    with 2-parameter Mooney-Rivlin (C10=0.382 MPa, C01=0.096 MPa, D1=0.01 MPa⁻¹).
+    The analysis is set up as a displacement-controlled compression of the shaft
+    surface onto the O-ring. The model currently diverges at approximately 35%
+    of the total displacement. Known issues in the model:
+    - Elements in the contact zone distort excessively
+    - Contact between O-ring and gland surfaces chatters (repeated open/close)
+    - Fixed time stepping (10 equal substeps) with no bisection allowed
+    The physics (material model, geometry, boundary conditions) are correct and
+    must not be changed. Only solver controls, mesh, contact settings, and time
+    stepping may be modified.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    The same model running to 100% compression (full 24% squeeze) without
+    divergence. Modifications limited to solver controls, mesh refinement in
+    the contact zone, contact algorithm settings, and time stepping strategy.
+    The final results should show realistic O-ring deformation, contact pressure
+    distribution, and von Mises stress in the rubber. No changes to material
+    model, geometry, or boundary conditions.
+  expected_files:
+    - name: "oring_seal_fixed.wbpz"
+      format: "Ansys Workbench project"
+      description: "Fixed project that runs to completion."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Analysis runs to 100% completion without divergence"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-02"
+    description: "No changes to material model (Mooney-Rivlin coefficients unchanged)"
+    critical: true
+    type: "property_check"
+  - id: "SC-03"
+    description: "No changes to geometry or boundary conditions"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-04"
+    description: "Contact pressure distribution is smooth and physically reasonable"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "No elements with negative Jacobian in the final deformed state"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-06"
+    description: "Peak von Mises stress in O-ring is in a physically reasonable range (1-10 MPa)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Contact chattering eliminated (stable contact status in final substeps)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Solution time is reasonable (not excessive substep count from over-cautious bisection)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-09"
+    description: "Changes documented: list of each modification and rationale"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "nonlinear"
+    - "convergence"
+    - "rubber"
+    - "contact"
+    - "ansys"
+    - "debugging"

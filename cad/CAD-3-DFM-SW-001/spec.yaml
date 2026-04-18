@@ -1,0 +1,132 @@
+eval_id: "CAD-3-DFM-SW-001"
+title: "Modify snap-fit electronics enclosure for injection molding DFM"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "CAD-3: Design for Manufacturing"
+sub_category: "Injection molding DFM corrections"
+application_domain: "Consumer products"
+functional_class:
+  - "Enclosure"
+  - "Cosmetic"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 4
+  tool_proficiency: 3
+  estimated_tool_calls: 35
+
+input_state:
+  files:
+    - name: "enclosure_top.SLDPRT"
+      format: "SLDPRT"
+      description: "Top half of snap-fit electronics enclosure with DFM violations."
+    - name: "enclosure_bottom.SLDPRT"
+      format: "SLDPRT"
+      description: "Bottom half of snap-fit electronics enclosure with DFM violations."
+  state_description: |
+    A two-piece (top and bottom) snap-fit electronics enclosure in ABS plastic.
+    Approximate dimensions 160mm x 90mm x 40mm. The current design has several
+    injection molding DFM violations: zero draft on all vertical faces, 3 undercut
+    features that would require side actions, non-uniform wall thickness ranging
+    from 1.2mm to 3.5mm, sharp internal corners with no radii, a thin rib section
+    prone to short shots, snap-fit hooks that cannot be ejected in a straight pull,
+    and bosses with incorrect proportions. The part is intended for a two-plate
+    mold with no side actions.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Both enclosure halves modified to be fully compatible with a two-plate
+    injection mold requiring no side actions. All vertical faces have 1-2
+    degrees of draft. Wall thickness is uniform at 1.8mm nominal (+/-10%).
+    All internal corners have minimum 0.5mm radius. Snap-fit features
+    redesigned for straight-pull ejection. Bosses sized per DFM guidelines
+    (OD = 2x screw ID). Ribs at 60% of nominal wall thickness. Gate location
+    and ejector pin witness marks specified on non-cosmetic faces. No undercuts
+    remain.
+  expected_files:
+    - name: "enclosure_top.SLDPRT"
+      format: "SLDPRT"
+      description: "Top half modified for injection molding DFM compliance."
+    - name: "enclosure_bottom.SLDPRT"
+      format: "SLDPRT"
+      description: "Bottom half modified for injection molding DFM compliance."
+
+success_criteria:
+  - id: "SC-01"
+    description: "All vertical faces have draft angle between 1 and 2 degrees in the pull direction"
+    critical: true
+    type: "geometric_check"
+  - id: "SC-02"
+    description: "No undercut features remain that would require side actions or lifters"
+    critical: true
+    type: "geometric_check"
+  - id: "SC-03"
+    description: "Wall thickness is uniform at 1.8mm nominal with no section exceeding +/-10% variation"
+    critical: true
+    type: "geometric_check"
+  - id: "SC-04"
+    description: "All internal corners have fillet radius >= 0.5mm (minimum 50% of wall thickness)"
+    critical: true
+    type: "geometric_check"
+  - id: "SC-05"
+    description: "Snap-fit hooks redesigned for straight-pull ejection without side actions"
+    critical: true
+    type: "geometric_check"
+  - id: "SC-06"
+    description: "Ejector pin witness marks located only on non-cosmetic (internal) faces"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-07"
+    description: "Gate location specified on a non-cosmetic face with adequate flow path"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-08"
+    description: "No sink marks opposite ribs or bosses (rib thickness <= 60% of adjacent wall)"
+    critical: false
+    type: "geometric_check"
+  - id: "SC-09"
+    description: "Parting line location on cosmetic faces is clean and follows a natural edge"
+    critical: false
+    type: "geometric_check"
+  - id: "SC-10"
+    description: "Boss design follows DFM guidelines: OD approximately 2x screw hole ID"
+    critical: false
+    type: "geometric_check"
+  - id: "SC-11"
+    description: "Text and logos are raised (standing proud) not recessed to avoid trapped gas"
+    critical: false
+    type: "geometric_check"
+  - id: "SC-12"
+    description: "Mold-flow-friendly fill path with no dead ends or excessively long flow lengths"
+    critical: false
+    type: "geometric_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "dfm"
+    - "injection-molding"
+    - "snap-fit"
+    - "enclosure"
+    - "abs"

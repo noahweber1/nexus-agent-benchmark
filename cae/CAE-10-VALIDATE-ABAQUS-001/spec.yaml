@@ -1,0 +1,136 @@
+eval_id: "CAE-10-VALIDATE-ABAQUS-001"
+title: "Modal correlation of instrument panel frame: FEA vs experimental data"
+version: "1.0"
+status: "draft"
+
+target_tool: "Abaqus 2024"
+category: "CAE-10: Model Validation & Correlation"
+sub_category: "Modal correlation with joint stiffness updating"
+application_domain: "Automotive"
+functional_class:
+  - "Primary structure"
+  - "Mounting"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 5
+  tool_proficiency: 4
+  estimated_tool_calls: 55
+
+input_state:
+  files:
+    - name: "ip_frame.inp"
+      format: "Abaqus input"
+      description: "FEA model of the instrument panel frame with current bolt joint stiffness values."
+    - name: "experimental_modes.csv"
+      format: "CSV"
+      description: "Experimental modal analysis data: 8 modes (frequency, damping ratio, mode shape vectors at 24 sensor locations)."
+    - name: "sensor_locations.csv"
+      format: "CSV"
+      description: "XYZ coordinates of 24 accelerometer locations used in the modal test."
+  state_description: |
+    An Abaqus model of an automotive instrument panel (IP) cross-car beam frame.
+    The frame is a welded steel tube structure with 12 bolted joints connecting
+    it to the body-in-white (BIW). The current model uses rigid connections
+    (RBE2/KINEMATIC COUPLING) at all bolt joints.
+    Experimental modal test data is provided for the first 8 modes (frequency
+    range: 25-200 Hz). The current FEA model over-predicts frequencies by 8-15%
+    (typical of models with over-stiff joints).
+    The agent must:
+    1. Run the baseline FEA modal analysis
+    2. Extract FEA mode shapes at sensor locations
+    3. Compute MAC (Modal Assurance Criterion) matrix vs experimental data
+    4. Identify poorly-correlated modes
+    5. Update bolt joint stiffness (replace rigid with CBUSH/SPRING elements)
+    6. Re-run and show improved correlation
+    7. Generate a correlation report
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Model updated with flexible bolt joint representations (CBUSH or spring
+    elements). MAC matrix computed for baseline and updated models. Frequency
+    correlation improved: target maximum frequency error < 5% for at least
+    6 of 8 modes. MAC diagonal values > 0.9 for at least 6 of 8 modes.
+    Correlation report with before/after comparison.
+  expected_files:
+    - name: "ip_frame_updated.inp"
+      format: "Abaqus input"
+      description: "Updated model with flexible joints."
+    - name: "correlation_report.pdf"
+      format: "PDF"
+      description: "Modal correlation report with MAC matrices, frequency comparison, and joint stiffness values."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Baseline FEA modal analysis completed and first 8 modes extracted"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-02"
+    description: "FEA mode shapes interpolated/extracted at 24 sensor locations"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-03"
+    description: "MAC matrix computed correctly (8x8 for baseline vs experimental)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-04"
+    description: "Mode pairing performed based on MAC values (FEA modes matched to experimental)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "Bolt joints updated from rigid to flexible (CBUSH or SPRING elements)"
+    critical: true
+    type: "property_check"
+  - id: "SC-06"
+    description: "Updated model frequency error < 5% for at least 6 of 8 modes"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Updated model MAC diagonal > 0.9 for at least 6 of 8 modes"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Joint stiffness values documented and physically reasonable (1e4-1e8 N/mm range)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-09"
+    description: "Report includes before/after frequency comparison table"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-10"
+    description: "Report includes before/after MAC matrix visualization (color map)"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-11"
+    description: "No mode switching in updated model (same mode order as experimental)"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "modal-correlation"
+    - "mac-matrix"
+    - "model-updating"
+    - "automotive"
+    - "abaqus"
+    - "validation"

@@ -1,0 +1,143 @@
+eval_id: "CAD-9-MOLD-SW-001"
+title: "Core/cavity mold inserts for TV remote control housing"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "CAD-9: Mold & Tool Design"
+sub_category: "Injection mold core/cavity design"
+application_domain: "Consumer products"
+functional_class:
+  - "Enclosure"
+  - "Cosmetic"
+
+complexity:
+  geometric: 4
+  engineering_judgment: 5
+  tool_proficiency: 5
+  estimated_tool_calls: 70
+
+input_state:
+  files:
+    - name: "remote_housing.SLDPRT"
+      format: "SLDPRT"
+      description: "TV remote control upper housing shell. ABS, 1.8mm nominal wall thickness."
+    - name: "remote_housing_spec.pdf"
+      format: "PDF"
+      description: "Product specification including surface finish, color, and production volume requirements."
+  state_description: |
+    A TV remote control upper housing shell, approximately 170mm x 48mm x 18mm.
+    ABS plastic (Cycolac MG47), 1.8mm nominal wall thickness. The part has:
+    - 14 button cutouts on the top face
+    - 2 side-action features: IR window slot and battery door latch
+    - Textured top surface (MT-11020 equivalent, 0.03mm depth)
+    - Internal ribs for circuit board mounting (4 posts, 6 snap hooks)
+    - Draft already applied on most faces (1 degree) but texture compensation
+      requires 1.5 degrees minimum on textured faces
+    - Gate location not yet determined
+    - Estimated annual volume: 500,000 units
+    The mold design goal is a two-plate mold with NO side actions — the 2
+    side-action features must be redesigned or the parting line adjusted to
+    eliminate them.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Complete core and cavity inserts for a two-plate injection mold. The part
+    has been modified to eliminate side actions (IR window and battery latch
+    redesigned for straight pull). Parting surface defined. Core and cavity
+    steel blocks with waterline cooling circuits (2 circuits each). Ejector
+    pin locations identified (minimum 12 pins). Gate location specified
+    (sub-gate on interior face). Draft increased to 1.5 degrees on textured faces.
+    Shrinkage compensation applied (0.5% for ABS). Mold flow direction considered
+    in parting line placement.
+  expected_files:
+    - name: "remote_housing_molded.SLDPRT"
+      format: "SLDPRT"
+      description: "Modified part with side actions eliminated and draft corrected."
+    - name: "mold_cavity.SLDPRT"
+      format: "SLDPRT"
+      description: "Cavity insert with cooling circuits."
+    - name: "mold_core.SLDPRT"
+      format: "SLDPRT"
+      description: "Core insert with cooling circuits and ejector pin holes."
+    - name: "mold_assembly.SLDASM"
+      format: "SLDASM"
+      description: "Assembly showing core, cavity, and part in molded position."
+
+success_criteria:
+  - id: "SC-01"
+    description: "No side actions required — IR window and battery latch allow straight pull"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "Parting surface properly defined and separates core from cavity cleanly"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "Draft angle >= 1.5 degrees on all textured faces"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-04"
+    description: "Draft angle >= 1.0 degree on all non-textured faces"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "Shrinkage compensation of 0.5% applied uniformly"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Two cooling circuits in cavity insert with minimum 8mm channel diameter"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-07"
+    description: "Two cooling circuits in core insert with minimum 8mm channel diameter"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-08"
+    description: "Minimum 12 ejector pin locations identified on core side"
+    critical: false
+    type: "count_check"
+  - id: "SC-09"
+    description: "Gate location specified on non-cosmetic interior face"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-10"
+    description: "Cooling channel minimum 2x diameter from cavity surface"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-11"
+    description: "No undercuts remain in pull direction"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-12"
+    description: "Part wall thickness maintained at 1.8mm +/-10% after modifications"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "mold-design"
+    - "injection-molding"
+    - "core-cavity"
+    - "consumer"
+    - "abs"

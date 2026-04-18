@@ -1,0 +1,1 @@
+Run topology optimization on this FSAE suspension upright. Three load cases are already set up — bump, braking, cornering. Target 50% volume reduction, keep stress under yield for 6082-T6. It's going to be forged so keep that in mind.

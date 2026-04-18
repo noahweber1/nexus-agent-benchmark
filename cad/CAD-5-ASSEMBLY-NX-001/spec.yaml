@@ -1,0 +1,129 @@
+eval_id: "CAD-5-ASSEMBLY-NX-001"
+title: "Restructure flat gearbox assembly into logical sub-assembly hierarchy"
+version: "1.0"
+status: "draft"
+
+target_tool: "NX 2406"
+category: "CAD-5: Assembly Design & Management"
+sub_category: "Assembly restructuring and hierarchy"
+application_domain: "Industrial equipment"
+functional_class:
+  - "Power transmission"
+  - "Bearing"
+  - "Enclosure"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 4
+  tool_proficiency: 4
+  estimated_tool_calls: 55
+
+input_state:
+  files:
+    - name: "gearbox_flat.prt"
+      format: "PRT (NX)"
+      description: "Flat assembly file with all 87 components at the top level — no sub-assemblies."
+  state_description: |
+    An 87-component parallel-shaft helical gearbox in NX, stored as a flat
+    assembly (all parts at top level). Contains: 2 gear pairs (4 gears total),
+    6 rolling element bearings (4x 6310, 2x 6314), 3 shafts, 2-piece split
+    housing (upper/lower), 2 end covers, 4 lip seals, 36 hex bolts + nuts for
+    housing split and covers, 8 dowel pins, 12 housing bolts, 2 inspection
+    covers, 1 breather cap, 1 drain plug, 1 oil level sight glass, 2 lifting
+    eyes, and 4 mounting feet. All assembly constraints are defined at the
+    top level. No sub-assemblies exist.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    The same 87 components organized into a logical sub-assembly hierarchy:
+    - Input shaft sub-assembly (shaft + 2 bearings + 2 seals + gear)
+    - Output shaft sub-assembly (shaft + 2 bearings + 2 seals + gear)
+    - Intermediate shaft sub-assembly (shaft + 2 bearings + 2 gears)
+    - Lower housing sub-assembly (lower housing + dowels + drain + sight glass + feet)
+    - Upper housing sub-assembly (upper housing + breather + inspection covers + lifting eyes)
+    - Housing fastener sets grouped logically
+    - Top-level assembly references sub-assemblies with correct constraints
+    All original mates preserved. Exploded view created. Part count unchanged.
+  expected_files:
+    - name: "gearbox_assy.prt"
+      format: "PRT (NX)"
+      description: "Restructured top-level assembly."
+    - name: "input_shaft_assy.prt"
+      format: "PRT (NX)"
+      description: "Input shaft sub-assembly."
+    - name: "output_shaft_assy.prt"
+      format: "PRT (NX)"
+      description: "Output shaft sub-assembly."
+    - name: "intermediate_shaft_assy.prt"
+      format: "PRT (NX)"
+      description: "Intermediate shaft sub-assembly."
+
+success_criteria:
+  - id: "SC-01"
+    description: "All 87 original components present (none lost or duplicated)"
+    critical: true
+    type: "count_check"
+  - id: "SC-02"
+    description: "Shaft sub-assemblies correctly group shaft + bearings + seals + gears"
+    critical: true
+    type: "component_check"
+  - id: "SC-03"
+    description: "Housing split into upper and lower sub-assemblies"
+    critical: false
+    type: "component_check"
+  - id: "SC-04"
+    description: "All assembly constraints preserved — no over- or under-constrained warnings"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-05"
+    description: "Exploded view created showing assembly/disassembly sequence"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-06"
+    description: "Sub-assembly hierarchy is maximum 3 levels deep"
+    critical: false
+    type: "component_check"
+  - id: "SC-07"
+    description: "Fasteners grouped by function (housing split bolts, cover bolts, mounting bolts)"
+    critical: false
+    type: "component_check"
+  - id: "SC-08"
+    description: "Each sub-assembly can be opened and edited independently without errors"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-09"
+    description: "Part naming convention applied consistently (e.g., GBX_INPUT_SHAFT_001)"
+    critical: false
+    type: "property_check"
+  - id: "SC-10"
+    description: "Assembly mass unchanged from original (within 0.01 kg)"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "assembly"
+    - "restructuring"
+    - "gearbox"
+    - "nx"
+    - "hierarchy"

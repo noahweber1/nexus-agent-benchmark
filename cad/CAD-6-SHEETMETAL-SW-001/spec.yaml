@@ -1,0 +1,122 @@
+eval_id: "CAD-6-SHEETMETAL-SW-001"
+title: "Convert solid cooling duct to sheet metal with valid flat pattern"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "CAD-6: Sheet Metal Design"
+sub_category: "Solid-to-sheet-metal conversion"
+application_domain: "Electronics enclosure"
+functional_class:
+  - "Thermal management"
+  - "Enclosure"
+
+complexity:
+  geometric: 4
+  engineering_judgment: 3
+  tool_proficiency: 4
+  estimated_tool_calls: 40
+
+input_state:
+  files:
+    - name: "cooling_duct_solid.SLDPRT"
+      format: "SLDPRT"
+      description: "Solid body representing a rectangular-to-dual-circular transition duct for electronics cooling."
+  state_description: |
+    A single solid body in SolidWorks representing a cooling air duct. The duct
+    transitions from a single 120mm x 60mm rectangular inlet to two circular
+    outlets of 45mm diameter each, over a length of 200mm. The solid body has
+    uniform 3mm wall thickness modeled as a shelled solid. Material is 1.2mm
+    galvanized steel (DX51D+Z275). The current model is a solid/surface body —
+    not a sheet metal part. No bends, reliefs, or flat pattern exist. The
+    transition includes a Y-splitter with a 15mm radius internal divider.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    A SolidWorks sheet metal part with 1.2mm thickness, K-factor 0.44, representing
+    the same duct geometry. The part must unfold to a valid flat pattern from a
+    single blank (no welded seams except one longitudinal closure seam). All bends
+    have appropriate relief cuts. The flat pattern must not self-intersect. Bend
+    lines and forming notes annotated. The circular outlets may use a segmented
+    approximation (minimum 8 segments per circle) since true circular-to-rectangular
+    transitions are not developable surfaces.
+  expected_files:
+    - name: "cooling_duct_sm.SLDPRT"
+      format: "SLDPRT"
+      description: "Sheet metal part file with flat pattern."
+    - name: "cooling_duct_flat.DXF"
+      format: "DXF"
+      description: "DXF export of the flat pattern for laser cutting."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Part converted to sheet metal feature tree (not solid body with thin shell)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "Material thickness is 1.2mm throughout"
+    critical: true
+    type: "property_check"
+  - id: "SC-03"
+    description: "K-factor set to 0.44 for galvanized steel"
+    critical: false
+    type: "property_check"
+  - id: "SC-04"
+    description: "Flat pattern unfolds without errors or self-intersections"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-05"
+    description: "Flat pattern is from a single blank (one contiguous shape)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-06"
+    description: "Rectangular inlet dimensions maintained (120mm x 60mm ±0.5mm)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Two circular outlets maintained (45mm diameter ±0.5mm each)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "All bends have relief cuts (rectangular or obround)"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-09"
+    description: "Circular outlets approximated with minimum 8 segments each"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-10"
+    description: "DXF flat pattern exported with bend lines and annotations"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-11"
+    description: "One longitudinal closure seam identified and marked for welding"
+    critical: false
+    type: "geometry_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "sheet-metal"
+    - "duct"
+    - "flat-pattern"
+    - "transition"

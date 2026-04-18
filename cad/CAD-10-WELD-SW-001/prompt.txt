@@ -1,0 +1,1 @@
+I have a 3D sketch layout for a conveyor drive station frame. Needs to carry an 85kg motor, 45kg gearbox, and handle 8kN of belt tension. Can you turn this into a proper weldment with a cut list? It's going in a wash-down environment so cap all the open tube ends.

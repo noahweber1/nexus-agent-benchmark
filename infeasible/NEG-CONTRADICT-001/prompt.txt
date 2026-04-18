@@ -1,0 +1,1 @@
+Can you make a drawing for this shaft? The 25mm journal needs cylindricity 0.002 and total runout 0.001 to datum A on the big diameter. Concentricity 0.005 on the 30mm section too. ASME Y14.5.

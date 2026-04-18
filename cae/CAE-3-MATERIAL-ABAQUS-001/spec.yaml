@@ -1,0 +1,123 @@
+eval_id: "CAE-3-MATERIAL-ABAQUS-001"
+title: "Composite drone arm tube with Hashin damage under combined loading"
+version: "1.0"
+status: "draft"
+
+target_tool: "Abaqus 2024"
+category: "CAE-3: Material Modeling"
+sub_category: "Composite layup with progressive damage"
+application_domain: "Aerospace"
+functional_class:
+  - "Primary structure"
+  - "Structural link"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 5
+  tool_proficiency: 5
+  estimated_tool_calls: 60
+
+input_state:
+  files:
+    - name: "drone_arm.inp"
+      format: "Abaqus input"
+      description: "Meshed cylindrical tube (shell elements) with boundary conditions but no material or layup definition."
+    - name: "t700_m21_properties.csv"
+      format: "CSV"
+      description: "Ply-level mechanical properties for T700/M21 carbon fiber prepreg."
+  state_description: |
+    A pre-meshed cylindrical tube representing a drone arm structure.
+    Dimensions: 28mm OD, 400mm length. Meshed with S4R shell elements
+    (2mm element size, ~3500 elements). Fixed at one end (cantilever).
+    Combined loading applied at the free end: 500N shear + 15 N·m torque.
+    No material properties, layup definition, or damage model defined.
+    The agent must define the complete composite material, layup, and
+    progressive damage model. Target layup: [±45/0/90/0/±45]s, 8 plies
+    total, each ply 0.125mm thick (total 1.0mm wall thickness).
+    The analysis should include cure thermal residual stress from a
+    stress-free temperature of 180°C to operating at 20°C.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Complete Abaqus input file with:
+    - T700/M21 material definition (elastic, strength, fracture energy)
+    - [±45/0/90/0/±45]s layup via *SHELL SECTION, COMPOSITE
+    - Hashin damage initiation with energy-based evolution
+    - Thermal step for cure residual stress (180°C → 20°C)
+    - Mechanical loading step following thermal
+    - Field output for fiber/matrix damage variables (DAMAGEFT, DAMAGEMT, etc.)
+  expected_files:
+    - name: "drone_arm_composite.inp"
+      format: "Abaqus input"
+      description: "Complete input file with composite material and damage model."
+
+success_criteria:
+  - id: "SC-01"
+    description: "T700/M21 elastic properties correctly defined (E1=130GPa, E2=8GPa, G12=4.5GPa, nu12=0.3)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-02"
+    description: "Layup is [±45/0/90/0/±45]s with correct ply orientations and thickness (0.125mm each)"
+    critical: true
+    type: "property_check"
+  - id: "SC-03"
+    description: "Hashin damage initiation criteria defined with all 4 strength values"
+    critical: true
+    type: "property_check"
+  - id: "SC-04"
+    description: "Damage evolution uses energy-based formulation with fracture energies"
+    critical: true
+    type: "property_check"
+  - id: "SC-05"
+    description: "Thermal step applies delta-T of -160°C (180→20) with correct CTE values"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "CTE values: alpha1 = -0.1e-6/°C (fiber direction), alpha2 = 30e-6/°C (transverse)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Mechanical load step follows thermal step (loads applied on top of residual stress)"
+    critical: true
+    type: "property_check"
+  - id: "SC-08"
+    description: "Output requests include DAMAGEFT, DAMAGEMT, DAMAGEFC, DAMAGEMC, TSAIW"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-09"
+    description: "Symmetric layup ([±45/0/90/0/±45]s = 8 plies, symmetric about midplane)"
+    critical: false
+    type: "property_check"
+  - id: "SC-10"
+    description: "Viscous regularization applied to damage model for convergence (coefficient ~1e-5)"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "composites"
+    - "hashin"
+    - "damage"
+    - "layup"
+    - "thermal-residual"
+    - "abaqus"

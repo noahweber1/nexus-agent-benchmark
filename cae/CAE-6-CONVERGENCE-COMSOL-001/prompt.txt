@@ -1,0 +1,1 @@
+I need a mesh convergence study on this stepped shaft — specifically at the shoulder fillet under bending. Compare the FEA result against Peterson's Kt when you're done. The model is set up, just needs meshing.

@@ -1,0 +1,123 @@
+eval_id: "CAD-1-DEFEATURE-SW-001"
+title: "Defeature satellite bracket assembly for thermal FEA"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "CAD-1: Defeaturing & Model Simplification"
+sub_category: "Defeature for thermal FEA"
+application_domain: "Aerospace"
+functional_class:
+  - "Primary structure"
+  - "Thermal management"
+  - "Mounting"
+
+complexity:
+  geometric: 4
+  engineering_judgment: 4
+  tool_proficiency: 3
+  estimated_tool_calls: 45
+
+input_state:
+  files:
+    - name: "satellite_bracket_assy.SLDASM"
+      format: "SLDASM"
+      description: "Top-level assembly with 47 components including brackets, fasteners, thermal pads, and harness clips."
+    - name: "parts/"
+      format: "SLDPRT (directory)"
+      description: "Directory containing all 47 component part files."
+  state_description: |
+    A 47-component satellite instrument bracket assembly in SolidWorks.
+    Contains: 4 main structural brackets (aluminum 6061-T6), 28 M4/M5
+    socket head cap screws with washers, 6 thermal interface pads (silicone),
+    3 harness tie-down clips (Delrin), 2 connector mounting plates, and
+    4 alignment dowel pins. All mates fully defined. Materials assigned
+    to all components. Mass properties computed. Assembly is fully
+    resolved with no errors or warnings.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    A simplified assembly suitable for thermal FEA meshing. Target: 12 or
+    fewer solid bodies. All cosmetic features (logos, engraving, chamfers
+    <0.5mm) removed. All fasteners replaced with bonded contact regions or
+    removed entirely. Thermal interface pads retained as separate bodies
+    with correct thickness. Harness clips and dowel pins removed. Small
+    fillets (<2mm) on non-thermal-path features removed. Remaining geometry
+    is watertight and meshable. No geometric errors in the FeatureManager
+    tree. Material assignments preserved on all retained bodies.
+  expected_files:
+    - name: "satellite_bracket_thermal.SLDASM"
+      format: "SLDASM"
+      description: "Defeatured assembly ready for thermal FEA export."
+    - name: "satellite_bracket_thermal.STEP"
+      format: "STEP AP214"
+      description: "STEP export of defeatured assembly for solver import."
+
+success_criteria:
+  - id: "SC-01"
+    description: "All fillets with radius < 2mm on non-thermal-path faces removed"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "All cosmetic features (logos, engraving, knurling, chamfers < 0.5mm) removed"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "All 28 fasteners (screws + washers) removed"
+    critical: false
+    type: "component_check"
+  - id: "SC-04"
+    description: "All 3 harness clips and 4 dowel pins removed"
+    critical: false
+    type: "component_check"
+  - id: "SC-05"
+    description: "All 6 thermal interface pads retained as separate bodies with original thickness"
+    critical: true
+    type: "component_check"
+  - id: "SC-06"
+    description: "Assembly reduced to 12 or fewer solid bodies"
+    critical: false
+    type: "count_check"
+  - id: "SC-07"
+    description: "No geometric errors or rebuild warnings in FeatureManager tree"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-08"
+    description: "All remaining geometry is watertight (no open surfaces, gaps, or self-intersections)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-09"
+    description: "Material assignments preserved on all retained bodies"
+    critical: false
+    type: "property_check"
+  - id: "SC-10"
+    description: "STEP export produced and opens without errors in a neutral viewer"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "defeaturing"
+    - "thermal"
+    - "aerospace"
+    - "assembly-simplification"

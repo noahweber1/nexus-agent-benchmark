@@ -1,0 +1,1 @@
+We got this STEP file from a CATIA supplier — it's a turbine exhaust housing, 34 bodies. It imported pretty rough, bunch of gaps and missing faces. Can you clean it up so we can actually work with it in SolidWorks? Don't merge any bodies, we need them separate. Assign materials based on what each component does.

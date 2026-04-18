@@ -1,0 +1,1 @@
+This drone arm tube needs a composite layup — T700/M21 prepreg, something like +/-45/0/90 symmetric. It's a cantilever with shear and torque at the tip. We need to see if it fails under those loads with Hashin damage. Don't forget the cure residual stresses.

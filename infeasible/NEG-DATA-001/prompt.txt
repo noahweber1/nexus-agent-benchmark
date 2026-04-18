@@ -1,0 +1,1 @@
+Import this STEP file and run a stress analysis. Let me know if the part is good.

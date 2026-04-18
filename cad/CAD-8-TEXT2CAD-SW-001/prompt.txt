@@ -1,0 +1,1 @@
+I need a worm gear reducer housing modeled from the attached spec. Split housing, 100mm center distance, standard bearings, cast iron. Make it parametric on center distance — we have three frame sizes coming.

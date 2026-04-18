@@ -1,0 +1,1 @@
+I have a unit-load FEA of a crane hook bracket and a load history CSV from a year of operation. Need a weld fatigue assessment per BS 7608 — tell me which weld is critical and whether we get 500k cycles. The weld classifications are in the drawing.

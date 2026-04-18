@@ -1,0 +1,1 @@
+This cooling duct is modeled as a solid but we need to fabricate it from 1.2mm galvanized sheet. Can you convert it to sheet metal and give me a flat pattern? It's a rect-to-dual-circular transition so I know it won't unfold perfectly — you'll probably need to segment the round ends. Export the flat as DXF when you're done.

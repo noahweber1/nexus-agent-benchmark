@@ -1,0 +1,1 @@
+I need lift and drag on this wing section — NACA 0012, 5 degrees AoA, 50 m/s. Set it up in Abaqus and run it.

@@ -1,0 +1,124 @@
+eval_id: "CAE-2-PREPROCESS-ABAQUS-001"
+title: "Bolted flanged pipe joint with gasket under multi-step loading"
+version: "1.0"
+status: "draft"
+
+target_tool: "Abaqus 2024"
+category: "CAE-2: Pre-Processing — Boundary Conditions, Loads & Contacts"
+sub_category: "Bolted joint with gasket and cyclic symmetry"
+application_domain: "Pressure equipment"
+functional_class:
+  - "Sealing"
+  - "Fastener"
+  - "Fluid handling"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 5
+  tool_proficiency: 4
+  estimated_tool_calls: 55
+
+input_state:
+  files:
+    - name: "flanged_joint.inp"
+      format: "Abaqus input"
+      description: "Meshed 1/8 sector of a flanged pipe joint (bolts, flanges, gasket) — mesh only, no BCs/loads."
+    - name: "gasket_data.csv"
+      format: "CSV"
+      description: "Gasket pressure-closure test data for spiral wound gasket (ASME B16.20)."
+  state_description: |
+    A pre-meshed 1/8 cyclic symmetry sector of a 6-inch Class 300 flanged
+    pipe joint per ASME B16.5. The mesh includes:
+    - 2 flange halves (A105 forged carbon steel)
+    - 1 bolt (B7 stud) with nut — represented as a single body
+    - 1 spiral wound gasket ring (modeled as a solid with gasket element behavior)
+    - Pipe stubs extending 2 pipe diameters from each flange face
+    The mesh is C3D8R (reduced integration hex) for flanges and pipe,
+    C3D8I (incompatible modes) for the bolt, and GK3D8 (gasket elements)
+    for the gasket. Total: ~45,000 elements. No boundary conditions, loads,
+    contacts, or material properties are defined. The agent must set up the
+    complete analysis.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    A complete Abaqus input file ready to submit. Three analysis steps:
+    Step 1: Bolt pretension (160kN per bolt, 8 bolts total → 160kN on this sector's bolt).
+    Step 2: Internal pressure (15 MPa on bore surfaces + end cap force on pipe ends).
+    Step 3: External bending (5 kN·m applied as distributed coupling force on pipe end).
+    Cyclic symmetry BCs on cut faces. Gasket behavior defined from test data.
+    Frictional contact (mu=0.15) between flange faces and gasket, bonded between
+    bolt and flanges. Material properties for all components defined.
+  expected_files:
+    - name: "flanged_joint_analysis.inp"
+      format: "Abaqus input"
+      description: "Complete input file ready for submission."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Cyclic symmetry BCs correctly applied on both cut faces (1/8 sector = 45 degree symmetry)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "Bolt pretension of 160kN applied in Step 1 using *PRE-TENSION SECTION"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-03"
+    description: "Internal pressure of 15 MPa on bore surfaces in Step 2"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-04"
+    description: "End cap force (pressure × bore area / 8) applied on pipe end face"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "External bending moment of 5 kN·m applied in Step 3 via coupling"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Gasket behavior defined from CSV data using *GASKET BEHAVIOR"
+    critical: true
+    type: "property_check"
+  - id: "SC-07"
+    description: "Frictional contact (mu=0.15) between flange faces and gasket faces"
+    critical: true
+    type: "property_check"
+  - id: "SC-08"
+    description: "Material properties: A105 flanges (E=200GPa, nu=0.3), B7 bolt (E=205GPa, nu=0.3)"
+    critical: false
+    type: "property_check"
+  - id: "SC-09"
+    description: "Analysis steps are sequential with proper load history (pretension maintained in Steps 2-3)"
+    critical: true
+    type: "property_check"
+  - id: "SC-10"
+    description: "Output requests include stress, displacement, gasket closure, and bolt force"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "bolted-joint"
+    - "gasket"
+    - "cyclic-symmetry"
+    - "pressure"
+    - "abaqus"

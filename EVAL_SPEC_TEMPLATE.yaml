@@ -1,0 +1,123 @@
+# Nexus Agent Benchmark — Eval Spec Template
+# Copy this file into a new eval directory as spec.yaml and fill in all fields.
+
+# Unique identifier following the pattern: {CATEGORY}-{TOOL}-{SEQ}
+# Examples: CAD-1-DEFEATURE-SW-001, CAE-3-MATERIAL-ABAQUS-001, NEG-PHYSICS-001
+eval_id: ""
+
+# Short descriptive title (under 80 characters)
+title: ""
+
+# Semver. Bump when success criteria or prompt change.
+version: "1.0"
+
+# draft | validated | retired
+# Only move to "validated" after expert sign-off (Step 4 of conversion pipeline).
+status: "draft"
+
+# Target CAD/CAE application and version
+# Examples: "SolidWorks 2024", "Abaqus 2024", "COMSOL 6.2", "ANSA v24.1.0"
+target_tool: ""
+
+# Category from the taxonomy
+# CAD: CAD-1 through CAD-10, CAE: CAE-1 through CAE-10
+# Example: "CAD-1: Defeaturing & Model Simplification"
+category: ""
+
+# Optional sub-category for finer classification
+# Example: "Defeature for thermal FEA"
+sub_category: ""
+
+# Application domain from the design doc list
+# Options: Aerospace, Automotive, Industrial equipment, Rotating machinery,
+#          Pressure equipment, Consumer products, Structural steel,
+#          Electronics enclosure, Medical device, Power generation,
+#          Marine, Rail, Construction equipment
+application_domain: ""
+
+# Functional classes from the design doc list (can be multiple)
+# Options: Primary structure, Secondary structure, Fastener, Sealing,
+#          Rotating component, Power transmission, Bearing, Enclosure,
+#          Mounting, Electrical, Electromagnetic, Thermal management,
+#          Structural link, Cosmetic, Fluid handling
+functional_class: []
+
+complexity:
+  # 1 = simple prismatic geometry, 5 = complex freeform surfaces / large assemblies
+  geometric: 0
+  # 1 = cookbook procedure, 5 = significant expert judgment required
+  engineering_judgment: 0
+  # 1 = basic tool knowledge, 5 = power-user / API-level proficiency required
+  tool_proficiency: 0
+  # Minimum number of discrete API/tool calls expected to complete the task
+  estimated_tool_calls: 0
+
+input_state:
+  # List of input files with metadata
+  # Each entry: {name: "filename.ext", format: "STEP AP214 | SLDPRT | ...", description: "..."}
+  files: []
+
+  # Detailed plain-language description of what is loaded when the agent begins.
+  # Include: number of parts/bodies, what is already configured, what is
+  # intentionally missing or wrong (if applicable).
+  state_description: ""
+
+  # How the input files were obtained
+  # Options: synthetic | reconstructed | expert_provided
+  procurement_path: ""
+
+# Relative path to the prompt file
+prompt_file: "prompt.txt"
+
+# Relative path to the guide file (tribal knowledge checklist)
+guide_file: "guide.md"
+
+expected_output:
+  # Detailed plain-language description of what should exist when the task is done.
+  # Be specific about geometry changes, model tree changes, file outputs,
+  # and numerical results.
+  state_description: ""
+
+  # List of expected output files
+  # Each entry: {name: "filename.ext", format: "SLDPRT | PDF | ...", description: "..."}
+  expected_files: []
+
+# Ordered list of specific, verifiable success checks.
+# Each entry:
+#   id:          Unique within this eval (e.g., SC-01)
+#   description: What to check — must be answerable as PASS / PARTIAL / FAIL
+#   critical:    true if failure on this criterion = automatic overall FAIL
+#   type:        One of: geometry_check, component_check, count_check,
+#                property_check, documentation_check, numerical_check,
+#                detection_check (for infeasible evals)
+success_criteria: []
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+# Set to true for negative/infeasible evals.
+# When true, the correct agent behavior is to report infeasibility with evidence.
+infeasibility_flag: false
+
+# Populated during expert validation (Step 4)
+human_baseline:
+  # Has an expert completed this task to validate it?
+  expert_completed: null
+  # How long did the expert take (minutes)?
+  expert_time_minutes: null
+  # Expert notes on difficulty, tricks, common pitfalls
+  expert_notes: null
+
+metadata:
+  # Identifier or name of the expert who sourced this task (internal tracking)
+  source_expert: null
+  # Team member who wrote this spec
+  author: "internal"
+  # Date this spec was created
+  date_created: "2026-04-14"
+  # Date an expert last validated the spec is accurate and complete
+  last_validated: null
+  # Free-form tags for filtering and grouping
+  tags: []

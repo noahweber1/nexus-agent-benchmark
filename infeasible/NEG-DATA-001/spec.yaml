@@ -1,0 +1,98 @@
+eval_id: "NEG-DATA-001"
+title: "Mesh and analyze STEP file with critical geometry defects and missing data"
+version: "1.0"
+status: "draft"
+
+target_tool: "Ansys Mechanical 2024 R2"
+category: "Infeasible: Insufficient Data"
+sub_category: "Missing physics and defective geometry"
+application_domain: "Industrial equipment"
+functional_class:
+  - "Primary structure"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 4
+  tool_proficiency: 3
+  estimated_tool_calls: 15
+
+input_state:
+  files:
+    - name: "bracket_defective.stp"
+      format: "STEP AP214"
+      description: "STEP file of a bracket with multiple geometry defects that prevent meshing."
+  state_description: |
+    A STEP file of a structural bracket with the following intentional defects:
+    - 4 surface gaps (up to 0.3mm) at fillet-to-face transitions
+    - 2 missing faces on the bottom flange (geometry is not watertight)
+    - 3 faces with flipped normals
+    - 1 self-intersecting surface at a blend region
+    No material properties, loads, boundary conditions, or analysis type are
+    specified in the prompt. The agent is simply told to "mesh and run analysis."
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    No analysis results produced. The agent should identify and enumerate:
+    1. All geometry defects preventing meshing (gaps, missing faces, flipped
+       normals, self-intersection)
+    2. All missing analysis inputs (material, loads, BCs, analysis type, acceptance criteria)
+    The agent should refuse to run an analysis and provide a structured list
+    of everything needed to proceed.
+  expected_files: []
+
+success_criteria:
+  - id: "SC-01"
+    description: "Agent identifies geometry is not watertight and cannot be meshed as-is"
+    critical: true
+    type: "detection_check"
+  - id: "SC-02"
+    description: "Agent enumerates specific geometry defects (gaps, missing faces, flipped normals, self-intersection)"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-03"
+    description: "Agent identifies that no material properties are defined"
+    critical: true
+    type: "detection_check"
+  - id: "SC-04"
+    description: "Agent identifies that no loads or boundary conditions are defined"
+    critical: true
+    type: "detection_check"
+  - id: "SC-05"
+    description: "Agent identifies that no analysis type is specified"
+    critical: false
+    type: "detection_check"
+  - id: "SC-06"
+    description: "Agent does NOT produce analysis results or claim to have run an analysis"
+    critical: true
+    type: "detection_check"
+  - id: "SC-07"
+    description: "Agent provides a structured checklist of what is needed to proceed"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: true
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "infeasible"
+    - "missing-data"
+    - "geometry-defects"
+    - "pre-processing"

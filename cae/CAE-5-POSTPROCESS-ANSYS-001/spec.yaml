@@ -1,0 +1,124 @@
+eval_id: "CAE-5-POSTPROCESS-ANSYS-001"
+title: "ASME VIII Div 2 stress assessment of pressure vessel nozzle junction"
+version: "1.0"
+status: "draft"
+
+target_tool: "Ansys Mechanical 2024 R2"
+category: "CAE-5: Post-Processing & Result Interpretation"
+sub_category: "Stress linearization and code assessment"
+application_domain: "Pressure equipment"
+functional_class:
+  - "Primary structure"
+  - "Fluid handling"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 5
+  tool_proficiency: 4
+  estimated_tool_calls: 50
+
+input_state:
+  files:
+    - name: "nozzle_junction.wbpz"
+      format: "Ansys Workbench project"
+      description: "Completed Ansys Mechanical analysis of a pressure vessel nozzle junction with results available."
+  state_description: |
+    A completed linear elastic FEA of a cylindrical pressure vessel with a
+    radial nozzle. The analysis has already been solved with correct loads
+    and boundary conditions:
+    - Vessel: 1500mm ID, 30mm wall, SA-516 Gr 70 steel
+    - Nozzle: 300mm OD, 15mm wall, SA-106 Gr B steel
+    - Design pressure: 3.5 MPa at 250°C
+    - Full model (no symmetry) with hex-dominant mesh
+    Results are available in the project: stress, strain, displacement.
+    The agent must perform post-processing per ASME VIII Division 2, Part 5:
+    stress linearization along 5 stress classification lines (SCLs) per
+    WRC 429 recommendations, categorize stresses into Pm, Pb, Q, F, compute
+    Ke factor for simplified fatigue assessment, and generate a summary table.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Stress linearization completed along 5 SCLs at critical locations
+    (nozzle-to-shell junction: 0°, 90°, 180°, 270° azimuthal positions,
+    plus one SCL at the shell away from the nozzle for reference). For each
+    SCL: membrane stress (Pm), membrane+bending (Pm+Pb), total stress (Pm+Pb+Q+F)
+    decomposed. Comparison against ASME allowable values (Sm, 1.5Sm, 3Sm).
+    Ke factor computed per ASME VIII-2 Table 5.13. Summary report table.
+  expected_files:
+    - name: "stress_linearization_report.pdf"
+      format: "PDF"
+      description: "Summary report with SCL locations, linearized stresses, and code compliance assessment."
+    - name: "scl_data.xlsx"
+      format: "XLSX"
+      description: "Tabulated linearization data for all 5 SCLs."
+
+success_criteria:
+  - id: "SC-01"
+    description: "5 SCLs placed at correct locations per WRC 429 (4 azimuthal + 1 reference)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-02"
+    description: "SCLs oriented through the full wall thickness, perpendicular to mid-surface"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "Membrane stress (Pm) correctly extracted for each SCL"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-04"
+    description: "Membrane + bending (Pm+Pb) correctly extracted for each SCL"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "Peak stress (F) computed as total minus (Pm+Pb+Q)"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Stress categories compared against correct ASME allowables (Sm at 250°C)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Ke factor computed per ASME VIII-2 Table 5.13 for fatigue screening"
+    critical: false
+    type: "numerical_check"
+  - id: "SC-08"
+    description: "Summary table includes: SCL ID, location, Pm, Pb, Q, F, allowable, margin"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-09"
+    description: "Report clearly states PASS or FAIL per ASME VIII-2 Part 5 for each SCL"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-10"
+    description: "Reference SCL (away from nozzle) shows Pm close to P*R/t (hoop stress validation)"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "asme"
+    - "stress-linearization"
+    - "pressure-vessel"
+    - "post-processing"
+    - "code-compliance"
+    - "ansys"

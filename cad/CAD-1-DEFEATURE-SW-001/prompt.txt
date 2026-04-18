@@ -1,0 +1,1 @@
+I need to run a thermal FEA on this satellite bracket assembly. Can you clean it up for meshing? It's way too detailed right now — 47 parts is overkill for a steady-state thermal. Just keep what actually matters for the heat path and get rid of the rest.

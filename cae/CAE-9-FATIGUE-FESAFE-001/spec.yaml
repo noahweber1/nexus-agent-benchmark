@@ -1,0 +1,134 @@
+eval_id: "CAE-9-FATIGUE-FESAFE-001"
+title: "Weld fatigue assessment of crane hook bracket per BS 7608"
+version: "1.0"
+status: "draft"
+
+target_tool: "fe-safe 2024"
+category: "CAE-9: Fatigue & Durability Analysis"
+sub_category: "Weld fatigue with variable amplitude loading"
+application_domain: "Construction equipment"
+functional_class:
+  - "Primary structure"
+  - "Structural link"
+
+complexity:
+  geometric: 3
+  engineering_judgment: 5
+  tool_proficiency: 4
+  estimated_tool_calls: 45
+
+input_state:
+  files:
+    - name: "crane_bracket.odb"
+      format: "Abaqus ODB"
+      description: "Completed Abaqus analysis results for the crane hook bracket under unit load."
+    - name: "load_history.csv"
+      format: "CSV"
+      description: "Variable-amplitude load history (4000 data points, representative of 1 year of operation)."
+    - name: "weld_locations.pdf"
+      format: "PDF"
+      description: "Drawing showing weld toe locations and weld classifications per BS 7608."
+  state_description: |
+    A completed linear elastic Abaqus analysis of a crane hook bracket. The
+    bracket is a welded fabrication in S355J2 steel, connecting the crane hook
+    block to the main beam. The FEA results are from a unit load case (1kN
+    vertical) -- actual loads will be scaled using the load history.
+    The bracket has 6 critical weld toes identified in the drawing:
+    - 2 fillet welds at gusset-to-flange joints (BS 7608 Class F)
+    - 2 butt welds at flange-to-web joints (BS 7608 Class D)
+    - 2 fillet welds at stiffener-to-web joints (BS 7608 Class F2)
+    The load history represents variable-amplitude crane operation over 1 year.
+    Peak load: 50kN, typical cycle range: 5-35kN. Target design life: 500,000
+    load cycles (approximately 20 years of operation).
+    The agent must perform rainflow cycle counting on the load history, apply
+    the appropriate BS 7608 fatigue curves, compute cumulative damage using
+    Miner's rule, and identify the critical weld toe.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    Complete fatigue assessment in fe-safe:
+    - Load history scaled and applied to the unit load FEA results
+    - Rainflow cycle counting performed
+    - BS 7608 fatigue curves applied at each weld classification zone
+    - Cumulative damage (Miner's sum) computed for each critical weld location
+    - Critical weld toe identified (highest damage)
+    - Damage extrapolated to target design life (500k cycles)
+    - Report with damage contours, rainflow matrix, and per-weld summary
+  expected_files:
+    - name: "fatigue_results.fer"
+      format: "fe-safe results"
+      description: "fe-safe results file with damage contours."
+    - name: "fatigue_report.pdf"
+      format: "PDF"
+      description: "Fatigue assessment report per BS 7608."
+
+success_criteria:
+  - id: "SC-01"
+    description: "Load history correctly imported and scaled to actual load range (peak 50kN)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-02"
+    description: "Rainflow cycle counting performed on the variable-amplitude history"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-03"
+    description: "Correct BS 7608 fatigue class assigned to each weld location (D, F, F2)"
+    critical: true
+    type: "property_check"
+  - id: "SC-04"
+    description: "Miner's rule cumulative damage computed for each weld toe"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-05"
+    description: "Critical weld toe identified (highest cumulative damage)"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-06"
+    description: "Damage extrapolated to 500,000 cycle design life with PASS/FAIL declaration"
+    critical: true
+    type: "numerical_check"
+  - id: "SC-07"
+    description: "Rainflow matrix plot included in report"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-08"
+    description: "Fatigue damage contour plot showing critical regions"
+    critical: false
+    type: "documentation_check"
+  - id: "SC-09"
+    description: "Report includes per-weld summary table: location, class, damage, life, safety factor"
+    critical: true
+    type: "documentation_check"
+  - id: "SC-10"
+    description: "Constant amplitude fatigue limit (CAFL) correctly applied per BS 7608 clause"
+    critical: false
+    type: "numerical_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "fatigue"
+    - "weld"
+    - "bs7608"
+    - "rainflow"
+    - "crane"
+    - "fe-safe"

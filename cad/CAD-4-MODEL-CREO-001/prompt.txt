@@ -1,0 +1,1 @@
+I need a mixed-flow impeller modeled in Creo from this spec sheet and blade profile data. 7+7 configuration, needs to be fully parametric — we'll be scaling this for different frame sizes.

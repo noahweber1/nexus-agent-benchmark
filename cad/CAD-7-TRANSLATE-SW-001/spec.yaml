@@ -1,0 +1,125 @@
+eval_id: "CAD-7-TRANSLATE-SW-001"
+title: "Import and repair STEP turbine exhaust housing from CATIA V5"
+version: "1.0"
+status: "draft"
+
+target_tool: "SolidWorks 2024"
+category: "CAD-7: Model Translation & Data Exchange"
+sub_category: "STEP import repair and healing"
+application_domain: "Power generation"
+functional_class:
+  - "Enclosure"
+  - "Thermal management"
+  - "Mounting"
+
+complexity:
+  geometric: 4
+  engineering_judgment: 3
+  tool_proficiency: 4
+  estimated_tool_calls: 50
+
+input_state:
+  files:
+    - name: "turbine_exhaust_housing.stp"
+      format: "STEP AP214"
+      description: "STEP file exported from CATIA V5 containing a turbine exhaust housing with known translation defects."
+    - name: "translation_report.txt"
+      format: "TXT"
+      description: "CATIA export log listing known issues flagged during STEP write."
+  state_description: |
+    A STEP AP214 file of a gas turbine exhaust housing, originally modeled in
+    CATIA V5. The housing is a large fabricated weldment consisting of 34 solid
+    bodies: outer casing (2 half-shells), inner liner (2 half-shells), 6 struts,
+    12 mounting lugs, 4 instrumentation bosses, 2 access panels, and 6 stiffening
+    rings. The STEP file has the following known defects from translation:
+    - 6 surface gaps (largest 0.08mm) at strut-to-casing junctions
+    - 3 sliver faces (aspect ratio > 1000:1) on stiffening ring fillets
+    - 2 missing faces on the inner liner near the aft flange
+    - 4 bodies with flipped surface normals (inward instead of outward)
+    No feature tree — everything is imported as dumb geometry. Materials are
+    not preserved in the STEP file. Original CATIA colors are partially retained.
+  procurement_path: "synthetic"
+
+prompt_file: "prompt.txt"
+guide_file: "guide.md"
+
+expected_output:
+  state_description: |
+    All 34 bodies imported and healed in SolidWorks. All 6 gaps closed, 3 sliver
+    faces removed, 2 missing faces reconstructed, 4 flipped normals corrected.
+    Every body is a valid watertight solid. Materials assigned based on component
+    function (Inconel 625 for inner liner, 304SS for outer casing, Inconel 718
+    for struts). Bodies named by function. Import Diagnostics shows zero errors.
+  expected_files:
+    - name: "turbine_exhaust_housing.SLDASM"
+      format: "SLDASM"
+      description: "Repaired assembly with all 34 bodies as separate parts."
+    - name: "repair_log.txt"
+      format: "TXT"
+      description: "Log documenting all repairs performed, body by body."
+
+success_criteria:
+  - id: "SC-01"
+    description: "All 34 bodies present after import (none lost)"
+    critical: true
+    type: "count_check"
+  - id: "SC-02"
+    description: "All 6 surface gaps closed (Import Diagnostics: zero gap errors)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-03"
+    description: "All 3 sliver faces removed or replaced with properly-sized faces"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-04"
+    description: "2 missing faces on inner liner reconstructed to form watertight solid"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-05"
+    description: "All 4 flipped normals corrected (outward-facing on all bodies)"
+    critical: false
+    type: "geometry_check"
+  - id: "SC-06"
+    description: "All bodies are valid watertight solids (no open shells)"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-07"
+    description: "Materials assigned: Inconel 625 (liner), 304SS (casing), Inconel 718 (struts)"
+    critical: false
+    type: "property_check"
+  - id: "SC-08"
+    description: "Bodies named by function (e.g., OUTER_CASING_UPPER, STRUT_01)"
+    critical: false
+    type: "property_check"
+  - id: "SC-09"
+    description: "Import Diagnostics reports zero errors on all bodies"
+    critical: true
+    type: "geometry_check"
+  - id: "SC-10"
+    description: "Repair log documents each fix with body name, defect type, and action taken"
+    critical: false
+    type: "documentation_check"
+
+scoring:
+  pass: "All criteria met"
+  partial: ">=70% met, no critical failures"
+  fail: "<70% or any critical failure"
+
+infeasibility_flag: false
+
+human_baseline:
+  expert_completed: null
+  expert_time_minutes: null
+  expert_notes: null
+
+metadata:
+  source_expert: null
+  author: "internal"
+  date_created: "2026-04-14"
+  last_validated: null
+  tags:
+    - "translation"
+    - "step-import"
+    - "repair"
+    - "turbine"
+    - "catia"

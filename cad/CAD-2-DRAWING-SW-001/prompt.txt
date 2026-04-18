@@ -1,0 +1,1 @@
+I need a full drawing package for this hydraulic manifold — it's going to a CNC shop. All the ports need to be called out and the O-ring grooves need proper GD&T. ASME Y14.5. Export to PDF when you're done.
