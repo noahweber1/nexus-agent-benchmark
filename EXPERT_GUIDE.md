@@ -335,44 +335,89 @@ Example: "Set contact stiffness to 0.1x default for initial substeps in rubber a
 
 ## Writing New Evals from Expert Questionnaires
 
-If you are contributing eval cases from the Expert Questionnaire process:
+The Expert Questionnaire is the primary intake for new evals. This section explains exactly how each questionnaire field maps to an eval artifact, so you can work through a filled questionnaire and produce everything a developer needs.
 
-### Step 1: Identify Candidate Tasks
+### Step 1: Select Candidate Tasks
 
-From your questionnaire responses, select tasks that meet the criteria (3+ hours, 10+ operations, real engineering judgment). For each candidate, write a brief (2-3 sentence) description of:
-- What the task is
-- Why it was hard
-- What the correct outcome looks like
+Not every task in a questionnaire becomes an eval. Read the full questionnaire and pick tasks that meet the bar:
 
-### Step 2: Pair with a Developer
+- Section 1 Task reports 3+ hours of focused work
+- Complexity ratings include at least one 4 or 5 in either *Geometric complexity* or *Engineering judgment required*
+- Section 1 Q6 ("Where did you get stuck") describes tribal knowledge, not just button-clicking or UX complaints
+- Section 1 Q7 artifacts can be anonymized and shared
 
-A developer will help you package the task into the eval format. You provide:
-- The engineering content (task description, success criteria, guide items)
-- Input files (or enough information to reconstruct them)
-- Reference output (or clear description of what "done correctly" looks like)
+Reject tasks that are primarily data entry, format conversion, or "find the right button in the UI." Reject tasks whose artifacts cannot be shared without violating confidentiality — recreating a synthetic equivalent is acceptable, but describing the task without files is not.
 
-The developer handles:
-- YAML formatting
-- Directory structure
-- Integration with the eval infrastructure
+### Step 2: Map Questionnaire Fields to Eval Artifacts
 
-### Step 3: Write the Prompt as a User Would Say It
+This is the authoritative mapping. Work through every row for each selected task.
 
-Imagine you are asking a colleague to do this task. What would you actually say? Write that. It should be 1-4 sentences.
+| Questionnaire Field | Eval Artifact | Notes |
+|---|---|---|
+| §0 Primary CAD/CAE tool | `spec.yaml.target_tool` | Exact tool name + version (e.g., "SolidWorks 2024"). |
+| §0 Industry / application domain | `spec.yaml.application_domain` | Copy the checked items from the controlled list. |
+| §0 Name | `spec.yaml.metadata.source_expert` | Initials or a hash if the expert prefers anonymity. |
+| Task Template header (task name) | `spec.yaml.title` and the eval ID suffix | Short descriptive name, e.g. `CAD-3-DFM-SW-001`. |
+| Task → Functional class | `spec.yaml.functional_class` | Copy the checked items verbatim. |
+| Task Q1 (Starting State) | `spec.yaml.input_state.state_description` + file(s) under `input/` | Describe the state in the spec; place the anonymized file in `input/`. |
+| Task Q2 (Intent) | `prompt.txt` | Do **not** copy Q2 verbatim — it will be too formal. Re-voice as 1-4 casual sentences (see Step 3). |
+| Task Q3 (End State) | `spec.yaml.expected_output.state_description` + file(s) under `expected/` | The end file must have both model tree changes AND geometry changes baked in. |
+| Task Q4 (Verification) | `spec.yaml.success_criteria[]` | Each distinct check becomes one `SC-N` entry (see Step 5). |
+| Task Q5 (Complexity Rating) | `spec.yaml.complexity.{geometric, engineering_judgment, tool_proficiency}` | Copy the 1-5 ratings directly. `estimated_tool_calls` is derived separately. |
+| Task Q6 (Where You Got Stuck) | Items in `guide.md` | The richest source of tribal knowledge. Each stuck point typically becomes one or two guide items (see Step 4). |
+| Task Q7 (Artifacts) | Files under `input/`, `expected/`, and any shared macros/journals | Anonymize before committing. |
+| §2 Workflow Patterns (A-E) | Candidates for future eval categories and shared category guides | Not a single eval — these responses inform the suite's coverage, not individual test cases. |
+| §3 Task Mapping table row | Cross-check for the spec | Use it to confirm the per-task sections are consistent. |
 
-If you find yourself writing more than 4 sentences, you are over-specifying. Move the extra detail into the guide.
+### Step 3: Re-voice Q2 as the Prompt
 
-### Step 4: Write the Guide as Advice to a Junior Engineer
+Q2 ("Intent") is typically written in formal, complete sentences — that is how engineers describe tasks in a form, not how they ask for help. Re-voice it before committing to `prompt.txt`:
 
-Imagine a junior engineer with 2 years of experience is about to attempt this task for the first time. What do you tell them? Write those items.
+- Formal Q2: "Simplify the bracket assembly model by removing non-thermal features to enable tractable thermal finite element analysis."
+- Casual prompt: "This assembly is too detailed for thermal FEA — can you simplify it?"
 
-Each item should save the junior engineer from a mistake they would otherwise make, or teach them a heuristic they would otherwise learn the hard way.
+Rules (same as the Prompt section above): 1-4 sentences, no specific parameter values, no step-by-step instructions.
 
-### Step 5: Define Success Criteria
+### Step 4: Extract Guide Items from Q6
 
-For each criterion, ask yourself: "If I were reviewing this junior engineer's work, what would I check?" Each check becomes a success criterion.
+Q6 ("Where did you get stuck or spend disproportionate time") is the richest source of tribal knowledge. For each bullet in Q6, ask:
 
-Mark a criterion as critical if failure on it would make you reject the work entirely — not just send it back for revision, but reject it.
+- What did I learn that a junior engineer wouldn't know?
+- What was the heuristic or rule I ended up applying?
+- What would I have done differently from the start if I had known?
+
+Each answer typically becomes one guide item. Use the format `[What to do] — [Why]`. Discard "the tool was slow" or "I had to click a lot" — those are UX complaints, not transferable knowledge.
+
+### Step 5: Convert Q4 into Success Criteria
+
+Q4 ("How did you know it was correct") often already reads like a checklist. Convert each distinct verification step into one criterion:
+
+- Q4: "I visually inspected the geometry, checked that mass was within 30% of the original, and ran a draft analysis to confirm no faces were missing draft."
+- Success criteria:
+  - `SC-01`: Visual inspection shows no unintended geometry changes
+  - `SC-02`: Defeatured mass is within 30% of original mass — `critical: true` (outside this window indicates structural geometry was lost)
+  - `SC-03`: Draft analysis reports all faces with draft ≥ 1 degree
+
+Mark a criterion as `critical: true` when a failure on it would cause the expert to reject the work entirely during review — not merely request revisions.
+
+### Step 6: Produce the Input and End Files
+
+The expert produces both files. A written description is not a substitute.
+
+- **Input file** — the starting state, anonymized. If the original was proprietary, recreate a synthetic equivalent with the same relevant features and problems.
+- **End file** — the correct answer, with both the model tree and the geometry modified as required by the task.
+
+If either file cannot be produced without violating confidentiality, the task is not a candidate.
+
+### Step 7: Hand Off to a Developer
+
+Provide the developer with:
+- The filled questionnaire (or a draft `spec.yaml`)
+- `prompt.txt`
+- `guide.md`
+- Input and end files under `input/` and `expected/`
+
+The developer handles YAML formatting, directory structure, and integration with the eval infrastructure.
 
 ---
 
