@@ -41,11 +41,17 @@ nexus-evals/
 
 | Folder | What it contains | When written | Multiplicity |
 |---|---|---|---|
-| `input/` | Starting state — files the agent receives along with `prompt.txt` | When the eval is authored | One immutable set |
-| `expected/` | Expert's reference answer — end file with both model tree and geometry modified | When the eval is authored | One immutable set |
-| `results/run-YYYY-MM-DD/` | A single run's artifacts: agent output + screenshots + logs + evaluator score | Every eval run | Many, grows over time |
+| `input/` | Starting state — the **native program file** (e.g., `.sldprt`, `.cae`, `.mph`) the agent opens along with `prompt.txt` | When the eval is authored | One immutable set |
+| `expected/` | Expert's reference answer — the **native program file** with both model tree and geometry modified to the correct end state | When the eval is authored | One immutable set |
+| `results/run-YYYY-MM-DD/` | A single run's artifacts: the agent's **native program file** plus screenshots, logs, and evaluator score | Every eval run | Many, grows over time |
 
-Flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` → evaluator compares against `expected/` using `success_criteria`. See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for the complete `results/` layout and per-tool file-extension reference.
+#### The end state must be the native program file, not a neutral export
+
+The target we are aiming for is the native output of the CAD/CAE program we are operating — e.g., a SolidWorks `.sldprt`, an Abaqus `.cae`, a COMSOL `.mph`, an ANSYS `.wbpj`. These formats preserve the **parametric feature tree**: fillets, extrudes, patterns, mates, BCs, material assignments, mesh controls, study definitions. The evaluator opens the file in the target tool and inspects the modifications parametrically — clicking into the feature tree, editing dimensions, re-running the solve.
+
+Neutral exports (`.step`, `.iges`, `.stl`, `.pdf`, `.png`) are **dead artifacts**: they capture geometry or a view but lose the feature tree, constraints, and design intent. They are useful as *supplementary evidence* for visual comparison and cross-tool review, but they are never the reference answer. If a `.step` file is the only thing in `expected/`, the eval is broken — there is no way to verify that the agent modified the model tree correctly.
+
+Flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` (native file) → evaluator opens native file in the target tool and compares against `expected/` using `success_criteria`. See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for the complete `results/` layout and per-tool file-extension reference.
 
 ## How to Add an Eval
 

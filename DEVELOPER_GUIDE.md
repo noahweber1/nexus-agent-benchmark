@@ -35,11 +35,13 @@ Each eval directory contains:
 
 | Folder | What it contains | When written | Multiplicity |
 |---|---|---|---|
-| `input/` | Starting state — the files the agent is given along with `prompt.txt` | Once, when the eval is authored | One immutable set |
-| `expected/` | The expert's reference answer — both model tree and geometry modified to the correct final state | Once, when the eval is authored | One immutable set |
-| `results/run-YYYY-MM-DD/output_files/` | The agent's actual attempt for a given run | Every time the eval is executed | Many, one per run |
+| `input/` | Starting state — the **native program file** (e.g., `.sldprt`, `.cae`, `.mph`) the agent opens along with `prompt.txt` | Once, when the eval is authored | One immutable set |
+| `expected/` | The expert's reference answer — the **native program file** with both model tree and geometry modified to the correct final state | Once, when the eval is authored | One immutable set |
+| `results/run-YYYY-MM-DD/output_files/` | The agent's actual attempt — the **native program file** the agent produced, plus derived artifacts | Every time the eval is executed | Many, one per run |
 
-The flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` → evaluator compares against `expected/` using `success_criteria` in `spec.yaml`.
+**The end state target is the native program file, not a neutral export.** Native formats (`.sldprt`, `.cae`, `.mph`, `.wbpj`, etc.) preserve the parametric feature tree — the evaluator opens the file in the target tool and inspects fillets, extrudes, patterns, mates, BCs, and study definitions directly. Neutral exports (`.step`, `.iges`, `.stl`) are dead geometry: useful as supplementary evidence for visual comparison, but useless as the reference answer because the model tree is gone.
+
+The flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` (native file) → evaluator opens native file in the target tool and compares against `expected/` using `success_criteria` in `spec.yaml`.
 
 `expected/` is the authoritative reference and never changes once signed off. `results/` accumulates over time and captures how the agent behaves across builds.
 
