@@ -35,6 +35,18 @@ nexus-evals/
         └── (same structure)
 ```
 
+### Folder Roles: input/ vs expected/ vs results/
+
+`input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., all three can contain a `.sldprt`), but they play different roles:
+
+| Folder | What it contains | When written | Multiplicity |
+|---|---|---|---|
+| `input/` | Starting state — files the agent receives along with `prompt.txt` | When the eval is authored | One immutable set |
+| `expected/` | Expert's reference answer — end file with both model tree and geometry modified | When the eval is authored | One immutable set |
+| `results/run-YYYY-MM-DD/` | A single run's artifacts: agent output + screenshots + logs + evaluator score | Every eval run | Many, grows over time |
+
+Flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` → evaluator compares against `expected/` using `success_criteria`. See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for the complete `results/` layout and per-tool file-extension reference.
+
 ## How to Add an Eval
 
 1. Copy `EVAL_SPEC_TEMPLATE.yaml` into a new eval directory as `spec.yaml`.

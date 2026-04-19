@@ -38,6 +38,14 @@ We do NOT want:
 
 For each eval, you contribute three artifacts. A developer handles the YAML packaging and directory structure.
 
+> **Folder roles at a glance.** `input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., a `.sldprt` can appear in each), but play different roles:
+>
+> - `input/` — the starting state, handed to the agent along with `prompt.txt`. Authored once, immutable.
+> - `expected/` — your reference answer with both model tree and geometry modified. Authored once, immutable. The evaluator compares agent outputs against this.
+> - `results/run-YYYY-MM-DD/` — an agent's actual attempt plus the evaluator's score. Grows over time, one subfolder per run, authored by the developer and evaluator (not you).
+>
+> You (the expert) produce the first two. The third is populated later when the eval is executed.
+
 #### 1. Input File
 
 The starting state: the CAD/CAE file that represents the task at t=0 — a part with DFM violations, an assembly that needs restructuring, a STEP import with defects, a model ready to be meshed, etc.

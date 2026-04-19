@@ -26,8 +26,22 @@ Each eval directory contains:
 | `prompt.txt` | The vague, realistic user prompt given to the agent | Expert (validated) | Agent |
 | `guide.md` | Tribal knowledge checklist — embedded in agent harness | Expert | Agent (via harness) |
 | `input/` | Starting files (CAD models, STEP, meshes) | Expert provides or Developer reconstructs | Agent |
-| `expected/` | Reference screenshots, expected model tree, outputs | Expert provides | Evaluator |
+| `expected/` | Reference end file(s) produced by the expert — the "correct answer" | Expert provides | Evaluator |
 | `results/` | Agent outputs + evaluator scores (per run) | Developer records, Expert scores | Both |
+
+### Folder Roles: input/ vs expected/ vs results/
+
+`input/`, `expected/`, and `results/` all hold the same *kinds* of files (e.g., all three can contain a `.sldprt`), but they play different roles in the eval lifecycle:
+
+| Folder | What it contains | When written | Multiplicity |
+|---|---|---|---|
+| `input/` | Starting state — the files the agent is given along with `prompt.txt` | Once, when the eval is authored | One immutable set |
+| `expected/` | The expert's reference answer — both model tree and geometry modified to the correct final state | Once, when the eval is authored | One immutable set |
+| `results/run-YYYY-MM-DD/output_files/` | The agent's actual attempt for a given run | Every time the eval is executed | Many, one per run |
+
+The flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` → evaluator compares against `expected/` using `success_criteria` in `spec.yaml`.
+
+`expected/` is the authoritative reference and never changes once signed off. `results/` accumulates over time and captures how the agent behaves across builds.
 
 ### Reading spec.yaml
 
@@ -108,6 +122,29 @@ results/run-YYYY-MM-DD/
   score.yaml             # Filled in by the expert evaluator
   evaluator_notes.md     # Free-text expert observations
 ```
+
+#### File Types to Produce in `output_files/`
+
+The agent's native project file is the authoritative output — `expected/` contains the same kind of file, and the evaluator compares them directly. Derived artifacts (STEP, PDF, screenshots) are for easier visual / cross-tool comparison and review.
+
+| Eval(s) | Target tool | Primary output extension(s) |
+|---|---|---|
+| CAD-1, 2, 3, 6, 7, 8, 9, 10 | SolidWorks | `.sldprt` (part), `.sldasm` (assembly), `.slddrw` (drawing) |
+| CAD-4 | Creo | `.prt` (part), `.asm` (assembly), `.drw` (drawing) |
+| CAD-5 | NX | `.prt` (Siemens NX — same extension as Creo, different format) |
+| CAE-1 | ANSA | `.ansa`; solver decks `.nas`/`.bdf`/`.inp`/`.key` |
+| CAE-2, 3, 10 | Abaqus | `.cae` (model DB), `.inp` (solver input), `.odb` (results), `.dat`/`.msg`/`.sta` (logs) |
+| CAE-4, 5, 8 | ANSYS | `.wbpj`/`.wbpz` (Workbench), `.cdb` (mesh), `.rst`/`.rth` (results), `.inp` (APDL), `.out` (log) |
+| CAE-6, 7 | COMSOL | `.mph` (model), `.mphbin` (binary), `.m`/`.java` (LiveLink scripts) |
+| CAE-9 | fe-safe | `.fes` (model), `.csv` (life/damage export) |
+
+**Cross-cutting (every eval):**
+- Neutral exchange: `.step`/`.stp`, `.iges`/`.igs`, `.stl`
+- 2D drawings: `.pdf`, `.dxf`, `.dwg`
+- Evidence: `.png` (screenshots in `screenshots/`), `.mp4` (screen recording)
+- Automation artifacts if the agent recorded one: `.swp`/`.sldmacro` (SolidWorks VBA), `.py` (Abaqus/ANSYS scripting), `.rpy`/`.jnl` (Abaqus replay/journal), `.mac` (APDL), `.jou` (NX journal)
+
+**Practical rule:** the native project file in `output_files/` is authoritative (the "end file" the agent produced). STEP/PDF/PNG are derived artifacts for comparison against `expected/` and for evaluator review. `api_call_log.json` captures the sequence that produced them.
 
 ---
 
