@@ -41,12 +41,14 @@ For each eval, you contribute three artifacts. A developer handles the YAML pack
 > **Folder roles at a glance.** `input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., a `.sldprt` can appear in each), but play different roles:
 >
 > - `input/` — the starting state as a **native program file** (e.g., `.sldprt`, `.cae`, `.mph`), handed to the agent along with `prompt.txt`. Authored once, immutable.
-> - `expected/` — your reference answer as a **native program file** with both model tree and geometry modified. Authored once, immutable. The evaluator opens this in the target tool and compares agent outputs against it.
+> - `expected/` — your reference answer as a **native program file** with both model tree and geometry modified. **You produce this file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. The evaluator opens this in the target tool and compares agent outputs against it.
 > - `results/run-YYYY-MM-DD/` — an agent's actual attempt (again, the **native program file**) plus the evaluator's score. Grows over time, one subfolder per run, authored by the developer and evaluator (not you).
 >
 > You (the expert) produce the first two. The third is populated later when the eval is executed.
 >
 > **Why native, not STEP/IGES/STL?** The end state we are aiming for is what the target CAD/CAE program outputs — the file that preserves the parametric feature tree (fillets, extrudes, patterns, mates, BCs, study definitions). Neutral exports are dead geometry: fine as supplementary evidence, but they cannot serve as the reference answer because the model tree is gone.
+>
+> **Why by hand, not scripted?** The reference answer must capture the *engineering judgment* an experienced practitioner applies in the moment: which feature to suppress first, which face to fillet before the next, what element size is appropriate here, which BC set makes physical sense. A script or macro bakes in decisions that were made once and generalizes them away from the model at hand. Hand-driving the target software is what produces a reference answer that reflects real practitioner judgment — that is the thing the agent is being measured against.
 
 #### 1. Input File
 
@@ -88,6 +90,10 @@ The reference answer. Two pieces, delivered together:
 - **Geometry** — the physical changes the task required (draft applied, walls unified, undercuts eliminated, components regrouped into sub-assemblies, mesh applied with correct element type and size, BCs placed, etc.).
 
 Both changes must be baked into the file. A written description or guide alone is not sufficient — the end file is the concrete reference the agent's output is compared against. If you cannot produce the end file in the target tool yourself, the eval is not well-posed.
+
+**How you produce the end file.** Open the `input/` file in the target software and **do the task by hand** — the same way you would complete it on a normal working day with no agent involved. Click through the feature tree, create the new features, suppress or delete what the task requires, apply the material or mesh controls, place the boundary conditions, run the solve, save. If the task takes four hours of hand work to complete correctly, then producing the reference file takes four hours. The end file must be the result of real practitioner work inside the application — not a scripted batch operation, not a macro replay, not a derivation from a STEP re-import. The product of that manual session is what the agent's output is compared against.
+
+A useful test: if you can describe every meaningful decision that went into the end file — *"I suppressed the fastener bores before applying fillets because otherwise the fillet tangent spilled into the bore edge"*, *"I picked a 2mm element size at the tongue because a 4mm size skipped the stress concentration"* — you probably built it the right way. If you can't recall making those decisions, the file may have come from an automated path that short-circuited the judgment the eval is meant to measure.
 
 **(b) Success criteria** — a list of 8-15 specific, verifiable checks. Each must be answerable as PASS / PARTIAL / FAIL by an evaluator looking at the output file.
 
@@ -152,7 +158,7 @@ Before any eval enters the active suite, you validate it. This is the quality ga
 2. **Read the prompt.** Is it realistically vague? Would an engineer actually type this? If it reads like a specification, push back — make it vaguer.
 3. **Read the guide.** Are the items specific enough to be useful? Would they actually help a junior engineer? Are any critical items missing?
 4. **Check the input files.** Open them in the target tool. Does the starting state match the spec description? Are there unexpected issues?
-5. **Perform the task yourself.** (Or confirm that the expected output state is correct.) This is the most important step. If you cannot complete the task to the success criteria, the eval is broken.
+5. **Perform the task yourself by hand inside the target software.** Open the input file in the tool, complete the task click-by-click as you would on a normal working day without an agent, and save the result as the `expected/` reference. This is the most important step. A written description of the end state, or a partially scripted equivalent, is not a substitute. If you cannot complete the task manually to the success criteria, the eval is broken.
 6. **Review the success criteria.** Are they complete? Is there a check that would let a bad result pass? Is there a check that would fail a good result?
 7. **Sign off.** Confirm that you are satisfied the eval is accurate, the criteria are complete, and a PASS on all criteria genuinely means the task was done well.
 
@@ -415,7 +421,7 @@ Mark a criterion as `critical: true` when a failure on it would cause the expert
 The expert produces both files. A written description is not a substitute.
 
 - **Input file** — the starting state, anonymized. If the original was proprietary, recreate a synthetic equivalent with the same relevant features and problems.
-- **End file** — the correct answer, with both the model tree and the geometry modified as required by the task.
+- **End file** — the correct answer, with both the model tree and the geometry modified as required by the task. **Produce it by completing the task manually inside the target software**, exactly as you would without an agent — open the input file, do the work click-by-click, save the native file. That hand-produced artifact is the reference; a scripted or derived equivalent is not.
 
 If either file cannot be produced without violating confidentiality, the task is not a candidate.
 

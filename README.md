@@ -42,7 +42,7 @@ nexus-evals/
 | Folder | What it contains | When written | Multiplicity |
 |---|---|---|---|
 | `input/` | Starting state — the **native program file** (e.g., `.sldprt`, `.cae`, `.mph`) the agent opens along with `prompt.txt` | When the eval is authored | One immutable set |
-| `expected/` | Expert's reference answer — the **native program file** with both model tree and geometry modified to the correct end state | When the eval is authored | One immutable set |
+| `expected/` | Expert's reference answer — the **native program file** with both model tree and geometry modified to the correct end state. Produced by the expert performing the task by hand in the target software, as they would without any agent | When the eval is authored | One immutable set |
 | `results/run-YYYY-MM-DD/` | A single run's artifacts: the agent's **native program file** plus screenshots, logs, and evaluator score | Every eval run | Many, grows over time |
 
 #### The end state must be the native program file, not a neutral export
