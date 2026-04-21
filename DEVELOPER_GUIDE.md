@@ -94,43 +94,44 @@ Per EXPERT_GUIDE.md §End-File Package:
 - Runnable native file (`.wbpz` / `.cae` / `.sldprt` / `.mph` / …)
 - Text solver deck or journal where the tool has one (`.inp`, `.k`, `.jou`, `.dat`, `.wbjn`)
 - Reference results (`.rst`, `.odb`, `.dat.h5`, `d3plot`, or embedded in the native file)
-- `environment.yaml`, `fingerprint.yaml`, `DECISIONS.md`, `REPRODUCE.md`
+- `environment.yaml`, `DECISIONS.md`, `REPRODUCE.md`
 - 3–5 reference screenshots
 
 If any of these is missing, refuse the eval back to the expert. Do not try to reconstruct what is missing — the whole point of the bundle is that you are not guessing.
 
-### Two reproduction paths
+### How to verify
 
-**Path A — headless CI (preferred, automatic, no license).** For tools with Linux headless solvers: Abaqus, LS-DYNA, Fluent, Mechanical APDL. The evals infrastructure runs the text deck and asserts the fingerprint:
+The developer is expected to have the target tool installed (SolidWorks, Workbench, Abaqus, LS-DYNA, Fluent, COMSOL, etc.). Two verification modes, pick whichever is faster for the tool at hand:
+
+**Batch replay (preferred where a text deck exists).** For Abaqus, LS-DYNA, Fluent, Mechanical APDL, Workbench: run the text deck headlessly, then extract the numerical targets named in `spec.yaml.success_criteria` from the solver output.
 
 ```bash
-# Pseudocode for a CI fingerprint check
-case $tool in
-  abaqus)   abaqus job=input cpus=4 interactive ;;
-  lsdyna)   lsdyna i=input.k ncpu=4 ;;
-  fluent)   fluent 3ddp -g -t4 -i solve.jou ;;
-  mapdl)    mapdl -b -np 4 -i input.dat ;;
-esac
-
-python verify_fingerprint.py expected/fingerprint.yaml ./run_output/
-# Exits 0 on match; non-zero on first scalar out of tolerance.
+# Examples
+abaqus job=input cpus=4 interactive
+lsdyna i=input.k ncpu=4
+fluent 3ddp -g -t4 -i solve.jou
+mapdl -b -np 4 -i input.dat
+Workbench.exe -B -R session.wbjn
 ```
 
-The verifier reads `fingerprint.yaml`, extracts the same scalars from the solver output (element counts from the `.odb`/`.rst`/`.dat.h5`, peak-stress via tool-specific post-processing, canonical SHA of the text deck after stripping comments and timestamps), and asserts each against the reference with the eval-specified tolerance. No CAD license required.
+Then extract the scalars named in `success_criteria` from the solver output (element counts from the `.odb`/`.rst`/`.dat.h5`, peak-stress via tool-specific post-processing, displacement at a named probe node) and assert each against its tolerance. Faster than GUI verification and scriptable.
 
-Fingerprint mismatches in this path fall into three buckets:
-- **Tool version drift** — cross-check `environment.yaml` vs. the CI image. Pin the tool version if drift is the cause.
-- **Solver nondeterminism** — parallel reduction order, thread scheduling. Re-check `environment.yaml.cores_used` and set the same in CI.
+**GUI verification.** For SolidWorks, Discovery, COMSOL, and Abaqus/CAE pre/post workflows: open the native file, follow `REPRODUCE.md`, extract the `success_criteria` scalars in the tool's post-processor, and check against their tolerances. Use the screenshots as cross-checks.
+
+### Diagnosing mismatches
+
+When a reference scalar fails to reproduce, the failure is usually one of:
+
+- **Tool version drift** — cross-check `environment.yaml` vs. your install. Pin the tool version if drift is the cause.
+- **Solver nondeterminism** — parallel reduction order, thread scheduling. Match `environment.yaml.cores_used` and rerun.
+- **Machine state leakage** — absolute paths, missing custom material DB, unlisted addon. Check against the anonymization checklist in EXPERT_GUIDE.md.
 - **Real bundle corruption** — the bundle is genuinely broken. Bounce it back to the expert.
-
-**Path B — manual GUI verification.** For GUI-only tools: SolidWorks, Workbench UI, Discovery, COMSOL (when no Java export), Abaqus/CAE pre/post. You open the native file in the tool, follow `REPRODUCE.md`, and cross-check against screenshots and `fingerprint.yaml`. The fingerprint is still a machine-checkable invariant here — it just costs you a license seat and your attention rather than CI minutes.
 
 ### When to demand more from the expert
 
-- `fingerprint.yaml` contains only 1–2 scalars — push back. The fingerprint must be discriminating enough that a wrong answer cannot accidentally match.
-- `DECISIONS.md` is empty or reads like the `REPRODUCE.md` — push back. It should record judgment calls, not steps.
-- Reference numbers are given but no tolerance — push back. Every scalar needs a pass tolerance (absolute or percentage).
-- No text deck for a tool that supports one — push back. Abaqus/LS-DYNA/Fluent/APDL/Workbench evals without the text deck are not CI-reproducible.
+- `success_criteria` contains only subjective checks ("looks reasonable") — push back. Every numerical criterion needs a target value and a tolerance.
+- `DECISIONS.md` is empty or reads like `REPRODUCE.md` — push back. It should record judgment calls, not steps.
+- No text deck for a tool that supports one — push back. Abaqus/LS-DYNA/Fluent/APDL/Workbench evals without the text deck make regression runs expensive.
 
 ---
 

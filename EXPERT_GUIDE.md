@@ -41,7 +41,7 @@ For each eval, you contribute three artifacts. A developer handles the YAML pack
 > **Folder roles at a glance.** `input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., a `.sldprt` can appear in each), but play different roles:
 >
 > - `input/` — the starting state as a **native program file** (e.g., `.sldprt`, `.cae`, `.mph`), handed to the agent along with `prompt.txt`. Authored once, immutable.
-> - `expected/` — your reference answer as a **runnable reproduction bundle** centered on the native program file: the native file, a text solver deck or journal (required where the tool has one — see the per-tool matrix in §End-File Package), the reference results, `environment.yaml` (tool/OS/cores/addons/units), `fingerprint.yaml` (deterministic scalars a CI can check without a license), `DECISIONS.md` (the judgment calls you made), `REPRODUCE.md`, and a few screenshots. **You produce the native file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. Another engineer with the tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. See §End-File Package below for the per-tool artifact list and the pre-handoff anonymization checklist.
+> - `expected/` — your reference answer as a **runnable reproduction bundle** centered on the native program file: the native file, a text solver deck or journal (required where the tool has one — see the per-tool matrix in §End-File Package), the reference results, `environment.yaml` (tool/OS/cores/addons/units), `DECISIONS.md` (the judgment calls you made), `REPRODUCE.md`, and a few screenshots. **You produce the native file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. Another engineer with the tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. See §End-File Package below for the per-tool artifact list and the pre-handoff anonymization checklist.
 > - `results/run-YYYY-MM-DD/` — an agent's actual attempt (again, the **native program file**) plus the evaluator's score. Grows over time, one subfolder per run, authored by the developer and evaluator (not you).
 >
 > You (the expert) produce the first two. The third is populated later when the eval is executed.
@@ -109,7 +109,7 @@ Per-tool required artifacts:
 
 Universal tail — every eval, every tool:
 
-- **`environment.yaml`** — tool + build + OS + cores used + addons loaded + units system + license flavor + solver flags. Without this the developer cannot know which install to use and cannot explain a fingerprint miss. Example:
+- **`environment.yaml`** — tool + build + OS + cores used + addons loaded + units system + license flavor + solver flags. Without this the developer cannot know which install to use and cannot explain a numerical mismatch (solver results depend on cores, parallel reduction order, thread scheduling). Example:
   ```yaml
   tool: "ANSYS 2024 R2"
   build: "24.2.0.20240823"
@@ -120,29 +120,6 @@ Universal tail — every eval, every tool:
   license_flavor: "Research"
   solver_flags: "mapdl -np 8 -m 1024"
   ```
-- **`fingerprint.yaml`** — a small set of deterministic scalars the developer can check **without opening the native file in the tool**. This is the machine-checkable invariant for CI. Pick scalars that discriminate a correct end state from a wrong one:
-  ```yaml
-  # CAD
-  mass_kg: 2.4831
-  center_of_mass: [12.003, -5.117, 0.0024]
-  bounding_box: {x: [-80, 80], y: [-40, 40], z: [0, 25]}
-  face_count: 247
-  feature_count: 18
-
-  # CAE mesh
-  node_count: 482_113
-  element_count: 291_004
-  element_types: {C3D10: 285_221, C3D4: 5_783}
-
-  # CAE results
-  peak_von_mises_mpa: 278.4
-  max_deflection_mm: 1.237
-  probe_node_12847_stress_mpa: 142.6
-
-  # Text decks (canonicalize: strip comments, timestamps, author blocks)
-  inp_canonical_sha256: "a3c9…"
-  ```
-  A developer CI job can run the text deck, compute the same scalars, assert equality. No CAD license required for the assertion.
 - **`DECISIONS.md`** — 3–8 short entries per eval, one per meaningful judgment call made during hand-production: which ends were fixed, why this element size, why not contact, what was tried and rejected. This is the "if you can describe the decisions, you built it right" self-test captured on disk so the developer can read it without cornering the expert. Example entries:
   > - **Suppressed fastener bores before filleting** — otherwise the 2mm fillets spilled into bore edges.
   > - **Picked 0.3mm element size at the volute tongue** — 2mm skipped the stress concentration; tried 0.5mm, still under-resolved.
@@ -188,7 +165,7 @@ A useful test: if you can describe every meaningful decision that went into the 
 - Agent reported safety when the analysis is invalid
 - Wrong material properties in a structural analysis
 
-> **Reference.** See §Worked Example: Spring Stiffness at the end of this guide for a full eval — prompt, per-tool bundle, `fingerprint.yaml`, 8 success criteria with critical/non-critical flags, and a short decision journal. Use it as a calibration reference when deciding what your own eval's deliverables should look like.
+> **Reference.** See §Worked Example: Spring Stiffness at the end of this guide for a full eval — prompt, per-tool bundle, 8 success criteria with critical/non-critical flags and explicit numerical tolerances, and a short decision journal. Use it as a reference when deciding what your own eval's deliverables should look like.
 
 ---
 
@@ -245,7 +222,7 @@ Before any eval enters the active suite, you validate it. This is the quality ga
 - **Missing critical criterion**: If there is a way the agent could produce a dangerous or broken result that would still pass all criteria, add a criterion.
 - **Unrealistic complexity rating**: Recalibrate based on your own experience.
 - **Ambiguous criterion**: If two evaluators could reasonably disagree on PASS vs FAIL, the criterion needs to be more specific.
-- **Subjective numerical target**: If a criterion says "stress looks reasonable" instead of "peak von Mises within 5% of 278 MPa", tighten it. See §Worked Example for the shape of a fingerprint-anchored criterion set.
+- **Subjective numerical target**: If a criterion says "stress looks reasonable" instead of "peak von Mises within 5% of 278 MPa", tighten it. Every numerical criterion needs a target value and a tolerance. See §Worked Example for a criterion set with explicit tolerances.
 
 ---
 
@@ -375,22 +352,13 @@ Score on:
 
 ---
 
-## Evaluator Calibration
-
-To prevent drift between evaluators (one lenient, another strict):
-
-1. **Double evaluation**: Every 5th eval is independently scored by two evaluators.
-2. **Disagreement resolution**: When two evaluators disagree on the overall verdict, discuss and resolve. If the disagreement stems from ambiguous success criteria, refine the criteria and update the spec.
-3. **Inter-evaluator agreement rate**: Target >= 85% agreement on overall verdict across all double-evaluated evals.
-4. **Onboarding**: Before a new evaluator joins, they score 3 previously-evaluated evals independently. Significant disagreements are discussed before independent scoring begins.
-
-### Edge Cases
+## Edge Cases
 
 - **Agent asks clarifying questions**: Prompts are intentionally vague. The agent may ask clarifying questions — this is expected. Do not answer; score based on what the agent produces without additional input. Record the questions and whether they were reasonable. An agent that makes good assumptions and proceeds is preferred over one that blocks on questions.
 - **Agent partially succeeds then crashes**: Score based on the state at the time of failure. Note the crash in observations.
 - **Agent takes an unconventional but valid approach**: If the output meets all success criteria, it's a PASS regardless of method. Note the unexpected approach for future eval design.
 - **Agent modifies input files in unexpected ways**: Check that no input geometry was corrupted. Flag it as a critical failure even if not explicitly listed in criteria.
-- **You are unsure**: Mark the criterion as PARTIAL, explain the uncertainty in notes, and flag for discussion in the next calibration session.
+- **You are unsure**: Mark the criterion as PARTIAL, explain the uncertainty in notes, and flag the case back to the developer so the criterion can be sharpened.
 
 ---
 
@@ -517,7 +485,7 @@ The developer handles YAML formatting, directory structure, and integration with
 
 ## Worked Example: Spring Stiffness (CAE)
 
-This is a fully-formed eval that illustrates every deliverable the expert produces. Use it as a reference when you author your own evals — it shows the shape of a good prompt, the scope of a reasonable task, the engineering decisions the agent must make, and the numerical fingerprints that make the result objectively checkable.
+This is a fully-formed eval that illustrates every deliverable the expert produces. Use it as a reference when you author your own evals — it shows the shape of a good prompt, the scope of a reasonable task, the engineering decisions the agent must make, and the explicit numerical tolerances in `success_criteria` that make the result objectively checkable.
 
 ### The task (one sentence)
 
@@ -546,30 +514,25 @@ Two sentences. Names the file, names the material, names the deliverable, names 
 10. Compute `k_axial = F / δ_z` (N/mm) and `k_torsion = T / θ_rad` (N·m/rad)
 11. Report both numbers with units
 
-### Reference numbers (`fingerprint.yaml`)
+### Reference numbers
 
-```yaml
-# Compression case
-load_compression_N: 100
-displacement_axial_mm: 0.006609
-stiffness_axial_N_per_mm: 15131
+The authoritative reference values for this eval, produced by the expert during hand-production:
 
-# Torsion case
-load_torsion_Nm: 1.0
-rotation_axial_deg: 213
-rotation_axial_rad: 3.7175
-stiffness_torsion_Nm_per_rad: 0.269
+| Quantity | Value | Units |
+|---|---|---|
+| Axial load used | 100 | N |
+| Axial displacement measured | 0.006609 | mm |
+| **Axial stiffness** | **15,131** | **N/mm** |
+| Torque used | 1.0 | N·m |
+| Axial rotation measured | 213 (= 3.7175 rad) | deg |
+| **Torsional stiffness** | **0.269** | **N·m/rad** |
+| Mesh type | C3D10 (quadratic tet) | — |
+| Minimum element count | 10,000 | — |
+| Material | Structural steel (E = 200 GPa, ν = 0.3) | — |
 
-# Mesh + material invariants
-mesh_type: "C3D10 (quadratic tet)"
-mesh_element_count_min: 10_000
-material: "Structural steel (E=200 GPa, nu=0.3)"
+These values flow directly into `success_criteria` below with explicit ±5% tolerances.
 
-# Pass tolerance
-stiffness_tolerance_pct: 5.0
-```
-
-Key property: **stiffness is linear in applied load for a linear elastic analysis**. An agent that picks 10 N and 0.1 N·m should land on the same stiffness values within numerical tolerance. That invariance is why the fingerprint checks stiffness, not displacement — it lets the agent exercise judgment on the load magnitude without breaking the eval.
+Key property: **stiffness is linear in applied load for a linear elastic analysis**. An agent that picks 10 N and 0.1 N·m should land on the same stiffness values within numerical tolerance. That invariance is why the criteria check stiffness, not displacement — it lets the agent exercise judgment on the load magnitude without breaking the eval.
 
 ### Success criteria (`spec.yaml.success_criteria`)
 
@@ -605,8 +568,7 @@ Per the per-tool matrix (§End-File Package):
 ```
 expected/
 ├── spring_stiffness.wbpz          # Workbench archive — both studies solved
-├── spring_stiffness.inp           # Abaqus text deck — text, diffable, CI-runnable
-├── fingerprint.yaml               # the reference numbers above
+├── spring_stiffness.inp           # Abaqus text deck — text, diffable, headless-runnable
 ├── environment.yaml               # tool version, cores used, units system
 ├── DECISIONS.md                   # why 100 N, why C3D10 at ~2 mm, why rigid MPC on the torsion end
 ├── REPRODUCE.md                   # 5-line recipe to reproduce
@@ -642,12 +604,12 @@ expected/
 
 - **Short, casual prompt** — two sentences, no procedure baked in.
 - **Real engineering judgment required** — which ends, how fine a mesh, how to distribute the torque load, which post-processing to use.
-- **Objective outputs** — two scalars with units and a tolerance.
-- **Fingerprint is magnitude-invariant** — linearity makes stiffness the robust invariant.
+- **Objective outputs** — two scalars with units and a ±5% tolerance, sitting directly in `success_criteria`.
+- **Criteria are magnitude-invariant** — linearity makes stiffness the robust check; the agent is free to pick a different load magnitude.
 - **Mix of critical and non-critical criteria** — wrong stiffness fails; 5 GPa off in E does not.
-- **Reproducible end-to-end** — `.inp` + `fingerprint.yaml` give a CI-verifiable bundle; `.wbpz` + screenshots give an evaluator a hand-verifiable bundle; `DECISIONS.md` gives a reviewer the "why."
+- **Reproducible end-to-end** — the `.inp` text deck lets you rerun the solve headlessly; the `.wbpz` lets you open everything in the GUI; `DECISIONS.md` gives the reviewer the "why"; screenshots anchor the visual check.
 
-When your own eval has this shape — vague prompt, judgment-heavy task, objective numerical outputs, a fingerprint the CI can check without a license — it is a well-posed eval. If it is missing any of those, it probably needs another pass.
+When your own eval has this shape — vague prompt, judgment-heavy task, objective numerical outputs anchored to `success_criteria` tolerances, and a bundle that reproduces — it is a well-posed eval. If it is missing any of those, it probably needs another pass.
 
 ---
 
