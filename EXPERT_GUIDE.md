@@ -66,10 +66,12 @@ This is what the user types to the agent. It should sound like how you would act
 - "This assembly is too detailed for thermal FEA — can you simplify it?"
 - "I need a drawing package for this manifold, it's going to a CNC shop. Full GD&T."
 - "The O-ring model keeps crashing around 35%. Figure out why — don't change the material."
+- "Got a spring STEP from a vendor, `spring1.stp`, structural steel. Need compression and torsion stiffness for the datasheet." (see §Worked Example: Spring Stiffness for the full eval)
 
-**Bad prompts** (over-specified, unrealistic):
+**Bad prompts** (over-specified, unrealistic, or adversarial):
 - "Remove all fillets under 2mm, suppress cosmetic features, retain thermal pads as separate bodies, merge connector plates if thermally connected, export as STEP AP214 with angular tolerance 0.01 rad..."
 - "Set up a 3-step analysis: Step 1 bolt pretension 160kN using *PRE-TENSION SECTION, Step 2 pressure 15 MPa with end cap force P*A/8..."
+- "Import `C:\Users\me\Downloads\spring1.stp`, mesh with 2mm tetrahedra, fix bottom face, apply 100N axial, extract displacement, compute k=F/δ. DO NOT ASK ANY QUESTIONS. Reply with only two numbers." (procedure + absolute path + adversarial framing — all three disqualify it)
 
 Nobody talks like the bad examples. The agent needs to figure out the details from engineering knowledge — that is the capability we are measuring.
 
@@ -134,6 +136,8 @@ A useful test: if you can describe every meaningful decision that went into the 
 - Agent reported safety when the analysis is invalid
 - Wrong material properties in a structural analysis
 
+> **Reference.** See §Worked Example: Spring Stiffness at the end of this guide for a full eval — prompt, per-tool bundle, `fingerprint.yaml`, 8 success criteria with critical/non-critical flags, and a short decision journal. Use it as a calibration reference when deciding what your own eval's deliverables should look like.
+
 ---
 
 ### What the Developer Does Next
@@ -189,6 +193,7 @@ Before any eval enters the active suite, you validate it. This is the quality ga
 - **Missing critical criterion**: If there is a way the agent could produce a dangerous or broken result that would still pass all criteria, add a criterion.
 - **Unrealistic complexity rating**: Recalibrate based on your own experience.
 - **Ambiguous criterion**: If two evaluators could reasonably disagree on PASS vs FAIL, the criterion needs to be more specific.
+- **Subjective numerical target**: If a criterion says "stress looks reasonable" instead of "peak von Mises within 5% of 278 MPa", tighten it. See §Worked Example for the shape of a fingerprint-anchored criterion set.
 
 ---
 
@@ -455,6 +460,142 @@ Provide the developer with:
 - Input and end files under `input/` and `expected/`
 
 The developer handles YAML formatting, directory structure, and integration with the eval infrastructure.
+
+---
+
+## Worked Example: Spring Stiffness (CAE)
+
+This is a fully-formed eval that illustrates every deliverable the expert produces. Use it as a reference when you author your own evals — it shows the shape of a good prompt, the scope of a reasonable task, the engineering decisions the agent must make, and the numerical fingerprints that make the result objectively checkable.
+
+### The task (one sentence)
+
+A vendor ships a helical compression spring as STEP geometry. The engineer needs compression and torsion stiffness values for a datasheet.
+
+### The prompt (what the user types)
+
+```text
+Got a spring STEP from a vendor, spring1.stp, structural steel.
+Need compression and torsion stiffness for the datasheet.
+```
+
+Two sentences. Names the file, names the material, names the deliverable, names the business context (datasheet). Does not dictate load magnitude, element size, solver choice, BC scheme, or output format — all of that is engineering judgment the agent must exercise. This is what "casual, brief, and incomplete" looks like in practice.
+
+### What the agent must do
+
+1. Open `spring1.stp` in a CAE tool (ANSYS Mechanical, Abaqus, or equivalent)
+2. Create two independent linear static studies: **compression** and **torsion**
+3. Assign structural steel (E = 200 GPa, ν = 0.3 — the canonical values)
+4. Identify the two end faces of the helical spring from the geometry
+5. Mesh the volume with elements suitable for a slender helical body (3D solid, not shell or beam)
+6. **Compression case:** fix one end face (all DOF), apply axial force at the other end face
+7. **Torsion case:** fix one end face, apply axial torque at the other end face — distributed across the face via MPC/rigid coupling, not concentrated at a single point
+8. Solve both studies
+9. Extract total axial displacement at the loaded end (compression) and total rotation about the spring axis at the loaded end (torsion)
+10. Compute `k_axial = F / δ_z` (N/mm) and `k_torsion = T / θ_rad` (N·m/rad)
+11. Report both numbers with units
+
+### Reference numbers (`fingerprint.yaml`)
+
+```yaml
+# Compression case
+load_compression_N: 100
+displacement_axial_mm: 0.006609
+stiffness_axial_N_per_mm: 15131
+
+# Torsion case
+load_torsion_Nm: 1.0
+rotation_axial_deg: 213
+rotation_axial_rad: 3.7175
+stiffness_torsion_Nm_per_rad: 0.269
+
+# Mesh + material invariants
+mesh_type: "C3D10 (quadratic tet)"
+mesh_element_count_min: 10_000
+material: "Structural steel (E=200 GPa, nu=0.3)"
+
+# Pass tolerance
+stiffness_tolerance_pct: 5.0
+```
+
+Key property: **stiffness is linear in applied load for a linear elastic analysis**. An agent that picks 10 N and 0.1 N·m should land on the same stiffness values within numerical tolerance. That invariance is why the fingerprint checks stiffness, not displacement — it lets the agent exercise judgment on the load magnitude without breaking the eval.
+
+### Success criteria (`spec.yaml.success_criteria`)
+
+```yaml
+success_criteria:
+  - id: SC-01
+    description: "Axial stiffness within 5% of 15,131 N/mm"
+    critical: true
+  - id: SC-02
+    description: "Torsional stiffness within 5% of 0.269 N·m/rad"
+    critical: true
+  - id: SC-03
+    description: "Both spring ends identified as the two helical end-faces (not a mid-coil face, not a cut section)"
+    critical: true
+  - id: SC-04
+    description: "Structural steel material assigned (E ∈ [195, 210] GPa, ν ∈ [0.28, 0.33])"
+  - id: SC-05
+    description: "Two independent static studies created — not a single combined load case"
+  - id: SC-06
+    description: "Torsional load applied as torque about the spring axis via distributed coupling, not a point tangential force"
+  - id: SC-07
+    description: "Mesh is 3D solid with at least 10,000 elements — not shell, not beam"
+  - id: SC-08
+    description: "Reported units are correct — N/mm for axial, N·m/rad for torsional"
+```
+
+Three `critical: true` criteria: the two stiffness numbers and the end-face identification. Wrong on any of those and the output is engineering-unusable. The other five are `critical: false` — E = 205 GPa instead of 200 GPa is a deviation but not a disaster.
+
+### The `expected/` reproduction bundle
+
+Per the per-tool matrix (§End-File Package):
+
+```
+expected/
+├── spring_stiffness.wbpz          # Workbench archive — both studies solved
+├── spring_stiffness.inp           # Abaqus text deck — text, diffable, CI-runnable
+├── fingerprint.yaml               # the reference numbers above
+├── environment.yaml               # tool version, cores used, units system
+├── DECISIONS.md                   # why 100 N, why C3D10 at ~2 mm, why rigid MPC on the torsion end
+├── REPRODUCE.md                   # 5-line recipe to reproduce
+└── screenshots/
+    ├── geometry_end_faces_labeled.png
+    ├── mesh_overview.png
+    ├── compression_deformed_shape.png
+    └── torsion_deformed_shape.png
+```
+
+### `DECISIONS.md` excerpt (what it looks like)
+
+```markdown
+- **Picked 100 N compression and 1 N·m torsion.** Linearity makes the stiffness
+  magnitude-independent, but a small load keeps rotations in the linear
+  regime (the 213° I recorded is linear because there is no geometric
+  stiffening in the model — keep it that way). Any load 10–500 N or
+  0.1–5 N·m is fine.
+- **C3D10 at ~2 mm on the coil.** Linear tets under-predict helical bending
+  stiffness by 10-15%. Quadratic tets are cheap enough on this size part
+  and capture the coil curvature accurately.
+- **Rigid MPC on the torsion end face.** A point tangential force would
+  produce a large local distortion at the load node and a wrong rotation
+  reading. Coupling the face to a reference point and applying the torque
+  at the RP gives a clean, face-averaged rotation.
+- **Did NOT model contact between coils.** Compression load is small enough
+  that coils do not touch — confirmed by checking the deformed shape. If
+  the datasheet ever lists loads approaching coil-contact, this analysis
+  needs a nonlinear contact pass.
+```
+
+### Why this example is a good shape
+
+- **Short, casual prompt** — two sentences, no procedure baked in.
+- **Real engineering judgment required** — which ends, how fine a mesh, how to distribute the torque load, which post-processing to use.
+- **Objective outputs** — two scalars with units and a tolerance.
+- **Fingerprint is magnitude-invariant** — linearity makes stiffness the robust invariant.
+- **Mix of critical and non-critical criteria** — wrong stiffness fails; 5 GPa off in E does not.
+- **Reproducible end-to-end** — `.inp` + `fingerprint.yaml` give a CI-verifiable bundle; `.wbpz` + screenshots give an evaluator a hand-verifiable bundle; `DECISIONS.md` gives a reviewer the "why."
+
+When your own eval has this shape — vague prompt, judgment-heavy task, objective numerical outputs, a fingerprint the CI can check without a license — it is a well-posed eval. If it is missing any of those, it probably needs another pass.
 
 ---
 
