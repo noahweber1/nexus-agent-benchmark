@@ -41,7 +41,7 @@ For each eval, you contribute three artifacts. A developer handles the YAML pack
 > **Folder roles at a glance.** `input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., a `.sldprt` can appear in each), but play different roles:
 >
 > - `input/` — the starting state as a **native program file** (e.g., `.sldprt`, `.cae`, `.mph`), handed to the agent along with `prompt.txt`. Authored once, immutable.
-> - `expected/` — your reference answer as a **native program file** with both model tree and geometry modified. **You produce this file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. The evaluator opens this in the target tool and compares agent outputs against it.
+> - `expected/` — your reference answer as a **runnable reproduction bundle** centered on the native program file: the native file, a solver deck or journal (when the tool has one), the reference results, `tool_version.txt`, a short `REPRODUCE.md`, and a few screenshots. **You produce the native file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. Another engineer with the tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. See §End-File Package below for the per-tool artifact list.
 > - `results/run-YYYY-MM-DD/` — an agent's actual attempt (again, the **native program file**) plus the evaluator's score. Grows over time, one subfolder per run, authored by the developer and evaluator (not you).
 >
 > You (the expert) produce the first two. The third is populated later when the eval is executed.
@@ -85,15 +85,36 @@ Nobody talks like the bad examples. The agent needs to figure out the details fr
 
 The reference answer. Two pieces, delivered together:
 
-**(a) The end file itself.** Relative to the input file, both must be modified:
+**(a) The reproduction bundle.** Not a single file — a set of artifacts in `expected/` that together let another engineer reproduce the end state by opening or executing them.
+
+Relative to the input file, both must be modified in the native file:
 - **Model tree** — features added, removed, renamed, reordered, or suppressed as the task requires.
 - **Geometry** — the physical changes the task required (draft applied, walls unified, undercuts eliminated, components regrouped into sub-assemblies, mesh applied with correct element type and size, BCs placed, etc.).
 
-Both changes must be baked into the file. A written description or guide alone is not sufficient — the end file is the concrete reference the agent's output is compared against. If you cannot produce the end file in the target tool yourself, the eval is not well-posed.
+Per-tool required artifacts:
 
-**How you produce the end file.** Open the `input/` file in the target software and **do the task by hand** — the same way you would complete it on a normal working day with no agent involved. Click through the feature tree, create the new features, suppress or delete what the task requires, apply the material or mesh controls, place the boundary conditions, run the solve, save. If the task takes four hours of hand work to complete correctly, then producing the reference file takes four hours. The end file must be the result of real practitioner work inside the application — not a scripted batch operation, not a macro replay, not a derivation from a STEP re-import. The product of that manual session is what the agent's output is compared against.
+| Tool | Runnable native | Recipe / deck (text) | Reference results | How you run it |
+|---|---|---|---|---|
+| SolidWorks | `.sldprt` / `.sldasm` / `.slddrw` | — | — | Open in SolidWorks; the feature tree rebuilds |
+| ANSYS Workbench | **`.wbpz` archive** (not a bare `.wbpj` — a `.wbpj` is a pointer to an external directory tree and is useless on its own) | — | Embedded in the `.wbpz` if a Solution was computed | Open Workbench → File → Restore Archive → Update |
+| ANSYS Mechanical (standalone) | `.mechdat` archive | `.dat` or `.inp` solver deck | `.rst` result file | Open the `.mechdat`; or run the deck with `mapdl -b -i input.dat` |
+| ANSYS Fluent | `.cas.h5` + `.dat.h5` | `.jou` journal that rebuilds the case from the mesh | `.dat.h5` | `fluent 3ddp -g -t4 -i solve.jou` |
+| LS-DYNA (via Workbench) | `.wbpz` + `.k` keyword deck | The `.k` deck — text and diffable | `d3plot` binaries | Open the `.wbpz` → Solution → Update; or standalone `lsdyna i=input.k` |
+| Abaqus | `.cae` model database | **`.inp` text deck** — Abaqus's text input file is fully reproducible | `.odb` result file | `abaqus job=input cpus=N` |
+| COMSOL | `.mph` with cleared solution | Optional `.class.java` Model Builder export | `.mph` with saved solution | Open in COMSOL → Compute |
 
-A useful test: if you can describe every meaningful decision that went into the end file — *"I suppressed the fastener bores before applying fillets because otherwise the fillet tangent spilled into the bore edge"*, *"I picked a 2mm element size at the tongue because a 4mm size skipped the stress concentration"* — you probably built it the right way. If you can't recall making those decisions, the file may have come from an automated path that short-circuited the judgment the eval is meant to measure.
+Universal tail — every eval, every tool:
+
+- **`tool_version.txt`** — exact version string (`SolidWorks 2024 SP3.0`, `ANSYS 2024 R2`, `Abaqus 2024 HF3`, `COMSOL 6.2`). Without this, a future reviewer cannot know which install to use.
+- **`REPRODUCE.md`** — a short (5–10 line) plain-English recipe: open X → do Y → expect Z. Names every artifact the reviewer has to touch.
+- **`geometry.step`** (CAD evals only) — supplementary neutral export. Forensic artifact only; never the reference.
+- **3–5 reference screenshots** of key views — PNG files that let a reviewer without a license sanity-check the end state.
+
+> **Reproduction bar.** Another engineer who has the tool installed must be able to open the `expected/` folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. If they have to email you to ask how it was built, the bundle is incomplete.
+
+**How you produce the native file.** Open the `input/` file in the target software and **do the task by hand** — the same way you would complete it on a normal working day with no agent involved. Click through the feature tree, create the new features, suppress or delete what the task requires, apply the material or mesh controls, place the boundary conditions, run the solve, save. If the task takes four hours of hand work to complete correctly, then producing the reference file takes four hours. The native file must be the result of real practitioner work inside the application — not a scripted batch operation, not a macro replay, not a derivation from a STEP re-import. The product of that manual session is what the agent's output is compared against. The solver deck, results, and screenshots are then exported from that same session to complete the bundle.
+
+A useful test: if you can describe every meaningful decision that went into the native file — *"I suppressed the fastener bores before applying fillets because otherwise the fillet tangent spilled into the bore edge"*, *"I picked a 2mm element size at the tongue because a 4mm size skipped the stress concentration"* — you probably built it the right way. If you can't recall making those decisions, the file may have come from an automated path that short-circuited the judgment the eval is meant to measure.
 
 **(b) Success criteria** — a list of 8-15 specific, verifiable checks. Each must be answerable as PASS / PARTIAL / FAIL by an evaluator looking at the output file.
 

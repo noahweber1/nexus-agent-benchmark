@@ -42,7 +42,7 @@ nexus-evals/
 | Folder | What it contains | When written | Multiplicity |
 |---|---|---|---|
 | `input/` | Starting state — the **native program file** (e.g., `.sldprt`, `.cae`, `.mph`) the agent opens along with `prompt.txt` | When the eval is authored | One immutable set |
-| `expected/` | Expert's reference answer — the **native program file** with both model tree and geometry modified to the correct end state. Produced by the expert performing the task by hand in the target software, as they would without any agent | When the eval is authored | One immutable set |
+| `expected/` | **Runnable reproduction bundle**: native program file + solver deck or journal (when the tool has one) + reference results + `tool_version.txt` + `REPRODUCE.md` + 3–5 screenshots. The native file is produced by the expert performing the task by hand in the target software, as they would without any agent. See [EXPERT_GUIDE.md](EXPERT_GUIDE.md) §End-File Package for the per-tool artifact list | When the eval is authored | One immutable set |
 | `results/run-YYYY-MM-DD/` | A single run's artifacts: the agent's **native program file** plus screenshots, logs, and evaluator score | Every eval run | Many, grows over time |
 
 #### The end state must be the native program file, not a neutral export
@@ -52,6 +52,12 @@ The target we are aiming for is the native output of the CAD/CAE program we are 
 Neutral exports (`.step`, `.iges`, `.stl`, `.pdf`, `.png`) are **dead artifacts**: they capture geometry or a view but lose the feature tree, constraints, and design intent. They are useful as *supplementary evidence* for visual comparison and cross-tool review, but they are never the reference answer. If a `.step` file is the only thing in `expected/`, the eval is broken — there is no way to verify that the agent modified the model tree correctly.
 
 Flow: `input/` + `prompt.txt` → agent → `results/run-*/output_files/` (native file) → evaluator opens native file in the target tool and compares against `expected/` using `success_criteria`. See [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) for the complete `results/` layout and per-tool file-extension reference.
+
+### Reproduction bar
+
+The `expected/` folder is not just a reference — it is a **runnable bundle**. The contract: another engineer who has the target tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. If they have to email the author to ask how it was built, the bundle is incomplete.
+
+See [EXPERT_GUIDE.md](EXPERT_GUIDE.md) §End-File Package for the per-tool artifact matrix (SolidWorks, Workbench, Mechanical, Fluent, LS-DYNA, Abaqus, COMSOL) and the universal tail (`tool_version.txt`, `REPRODUCE.md`, neutral geometry export, screenshots).
 
 ## How to Add an Eval
 
