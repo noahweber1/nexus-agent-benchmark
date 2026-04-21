@@ -83,6 +83,57 @@ The guide is the most product-relevant artifact in each eval. It encodes tribal 
 
 ---
 
+## Verifying the Reference Bundle
+
+Before you run an agent against an eval, verify that the expert's `expected/` bundle itself reproduces. This is a cheap sanity check that catches the common failure modes — missing artifact, silent version upgrade, machine-state leakage, broken text deck — before you waste a full agent run comparing against a broken reference.
+
+### What the bundle should contain
+
+Per EXPERT_GUIDE.md §End-File Package:
+
+- Runnable native file (`.wbpz` / `.cae` / `.sldprt` / `.mph` / …)
+- Text solver deck or journal where the tool has one (`.inp`, `.k`, `.jou`, `.dat`, `.wbjn`)
+- Reference results (`.rst`, `.odb`, `.dat.h5`, `d3plot`, or embedded in the native file)
+- `environment.yaml`, `fingerprint.yaml`, `DECISIONS.md`, `REPRODUCE.md`
+- 3–5 reference screenshots
+
+If any of these is missing, refuse the eval back to the expert. Do not try to reconstruct what is missing — the whole point of the bundle is that you are not guessing.
+
+### Two reproduction paths
+
+**Path A — headless CI (preferred, automatic, no license).** For tools with Linux headless solvers: Abaqus, LS-DYNA, Fluent, Mechanical APDL. The evals infrastructure runs the text deck and asserts the fingerprint:
+
+```bash
+# Pseudocode for a CI fingerprint check
+case $tool in
+  abaqus)   abaqus job=input cpus=4 interactive ;;
+  lsdyna)   lsdyna i=input.k ncpu=4 ;;
+  fluent)   fluent 3ddp -g -t4 -i solve.jou ;;
+  mapdl)    mapdl -b -np 4 -i input.dat ;;
+esac
+
+python verify_fingerprint.py expected/fingerprint.yaml ./run_output/
+# Exits 0 on match; non-zero on first scalar out of tolerance.
+```
+
+The verifier reads `fingerprint.yaml`, extracts the same scalars from the solver output (element counts from the `.odb`/`.rst`/`.dat.h5`, peak-stress via tool-specific post-processing, canonical SHA of the text deck after stripping comments and timestamps), and asserts each against the reference with the eval-specified tolerance. No CAD license required.
+
+Fingerprint mismatches in this path fall into three buckets:
+- **Tool version drift** — cross-check `environment.yaml` vs. the CI image. Pin the tool version if drift is the cause.
+- **Solver nondeterminism** — parallel reduction order, thread scheduling. Re-check `environment.yaml.cores_used` and set the same in CI.
+- **Real bundle corruption** — the bundle is genuinely broken. Bounce it back to the expert.
+
+**Path B — manual GUI verification.** For GUI-only tools: SolidWorks, Workbench UI, Discovery, COMSOL (when no Java export), Abaqus/CAE pre/post. You open the native file in the tool, follow `REPRODUCE.md`, and cross-check against screenshots and `fingerprint.yaml`. The fingerprint is still a machine-checkable invariant here — it just costs you a license seat and your attention rather than CI minutes.
+
+### When to demand more from the expert
+
+- `fingerprint.yaml` contains only 1–2 scalars — push back. The fingerprint must be discriminating enough that a wrong answer cannot accidentally match.
+- `DECISIONS.md` is empty or reads like the `REPRODUCE.md` — push back. It should record judgment calls, not steps.
+- Reference numbers are given but no tolerance — push back. Every scalar needs a pass tolerance (absolute or percentage).
+- No text deck for a tool that supports one — push back. Abaqus/LS-DYNA/Fluent/APDL/Workbench evals without the text deck are not CI-reproducible.
+
+---
+
 ## Running an Eval
 
 ### Prerequisites

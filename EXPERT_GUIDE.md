@@ -41,7 +41,7 @@ For each eval, you contribute three artifacts. A developer handles the YAML pack
 > **Folder roles at a glance.** `input/`, `expected/`, and `results/` all hold the same kinds of files (e.g., a `.sldprt` can appear in each), but play different roles:
 >
 > - `input/` — the starting state as a **native program file** (e.g., `.sldprt`, `.cae`, `.mph`), handed to the agent along with `prompt.txt`. Authored once, immutable.
-> - `expected/` — your reference answer as a **runnable reproduction bundle** centered on the native program file: the native file, a solver deck or journal (when the tool has one), the reference results, `tool_version.txt`, a short `REPRODUCE.md`, and a few screenshots. **You produce the native file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. Another engineer with the tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. See §End-File Package below for the per-tool artifact list.
+> - `expected/` — your reference answer as a **runnable reproduction bundle** centered on the native program file: the native file, a text solver deck or journal (required where the tool has one — see the per-tool matrix in §End-File Package), the reference results, `environment.yaml` (tool/OS/cores/addons/units), `fingerprint.yaml` (deterministic scalars a CI can check without a license), `DECISIONS.md` (the judgment calls you made), `REPRODUCE.md`, and a few screenshots. **You produce the native file by performing the task by hand inside the target software** — every click, every feature, every BC, every mesh control — exactly as you would if no agent existed. Authored once, immutable. Another engineer with the tool installed must be able to open the folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. See §End-File Package below for the per-tool artifact list and the pre-handoff anonymization checklist.
 > - `results/run-YYYY-MM-DD/` — an agent's actual attempt (again, the **native program file**) plus the evaluator's score. Grows over time, one subfolder per run, authored by the developer and evaluator (not you).
 >
 > You (the expert) produce the first two. The third is populated later when the eval is executed.
@@ -95,24 +95,76 @@ Relative to the input file, both must be modified in the native file:
 
 Per-tool required artifacts:
 
-| Tool | Runnable native | Recipe / deck (text) | Reference results | How you run it |
+| Tool | Runnable native | Text deck (required where marked ✅) | Reference results | How you run it |
 |---|---|---|---|---|
-| SolidWorks | `.sldprt` / `.sldasm` / `.slddrw` | — | — | Open in SolidWorks; the feature tree rebuilds |
-| ANSYS Workbench | **`.wbpz` archive** (not a bare `.wbpj` — a `.wbpj` is a pointer to an external directory tree and is useless on its own) | — | Embedded in the `.wbpz` if a Solution was computed | Open Workbench → File → Restore Archive → Update |
-| ANSYS Mechanical (standalone) | `.mechdat` archive | `.dat` or `.inp` solver deck | `.rst` result file | Open the `.mechdat`; or run the deck with `mapdl -b -i input.dat` |
-| ANSYS Fluent | `.cas.h5` + `.dat.h5` | `.jou` journal that rebuilds the case from the mesh | `.dat.h5` | `fluent 3ddp -g -t4 -i solve.jou` |
-| LS-DYNA (via Workbench) | `.wbpz` + `.k` keyword deck | The `.k` deck — text and diffable | `d3plot` binaries | Open the `.wbpz` → Solution → Update; or standalone `lsdyna i=input.k` |
-| Abaqus | `.cae` model database | **`.inp` text deck** — Abaqus's text input file is fully reproducible | `.odb` result file | `abaqus job=input cpus=N` |
-| COMSOL | `.mph` with cleared solution | Optional `.class.java` Model Builder export | `.mph` with saved solution | Open in COMSOL → Compute |
+| SolidWorks | `.sldprt` / `.sldasm` / `.slddrw` | optional: `.swp` VBA macro (rarely load-bearing) | — | Open in SolidWorks; the feature tree rebuilds |
+| ANSYS Workbench | **`.wbpz` archive** (not a bare `.wbpj` — a `.wbpj` is a pointer to an external directory tree and is useless on its own) | ✅ **`.wbjn` journal** (File → Write Journal captures the session) | Embedded in the `.wbpz` if a Solution was computed | Restore Archive → Update; or batch `Workbench.exe -B -R session.wbjn` |
+| ANSYS Mechanical (standalone) | `.mechdat` archive | ✅ **`.dat` or `.inp` solver deck** (APDL text) | `.rst` result file | Open the `.mechdat`; or `mapdl -b -i input.dat` |
+| ANSYS Fluent | `.cas.h5` + `.dat.h5` | ✅ **`.jou` journal** that rebuilds the case from the mesh | `.dat.h5` | `fluent 3ddp -g -t4 -i solve.jou` |
+| LS-DYNA (via Workbench) | `.wbpz` + `.k` keyword deck | ✅ **`.k` keyword deck** — text and diffable | `d3plot` binaries | Open `.wbpz` → Solution → Update; or `lsdyna i=input.k` |
+| Abaqus | `.cae` model database | ✅ **`.inp` text deck** — Abaqus's text input file is fully reproducible | `.odb` result file | `abaqus job=input cpus=N` |
+| COMSOL | `.mph` with cleared solution | optional: `.class.java` Model Builder export | `.mph` with saved solution | Open in COMSOL → Compute |
+
+**Why text decks are required where the tool has one.** Abaqus `.inp`, LS-DYNA `.k`, Fluent `.jou`, Mechanical APDL `.dat`, and Workbench `.wbjn` are all text: diffable in a PR, replayable in headless CI, portable across tool versions with minimal drift, and independent of a GUI license. They are the reproducibility gold standard and they come free — the tool emits them as a byproduct of the hand-production session. SolidWorks and COMSOL have text deck options (VBA macros, Model Builder Java) but they are less load-bearing in practice, so they remain optional.
 
 Universal tail — every eval, every tool:
 
-- **`tool_version.txt`** — exact version string (`SolidWorks 2024 SP3.0`, `ANSYS 2024 R2`, `Abaqus 2024 HF3`, `COMSOL 6.2`). Without this, a future reviewer cannot know which install to use.
+- **`environment.yaml`** — tool + build + OS + cores used + addons loaded + units system + license flavor + solver flags. Without this the developer cannot know which install to use and cannot explain a fingerprint miss. Example:
+  ```yaml
+  tool: "ANSYS 2024 R2"
+  build: "24.2.0.20240823"
+  os: "Windows 11 23H2"
+  cores_used: 8                    # matters for solver determinism
+  addons_loaded: ["Mechanical", "Fluent", "LS-DYNA Component"]
+  units_system: "MKS"
+  license_flavor: "Research"
+  solver_flags: "mapdl -np 8 -m 1024"
+  ```
+- **`fingerprint.yaml`** — a small set of deterministic scalars the developer can check **without opening the native file in the tool**. This is the machine-checkable invariant for CI. Pick scalars that discriminate a correct end state from a wrong one:
+  ```yaml
+  # CAD
+  mass_kg: 2.4831
+  center_of_mass: [12.003, -5.117, 0.0024]
+  bounding_box: {x: [-80, 80], y: [-40, 40], z: [0, 25]}
+  face_count: 247
+  feature_count: 18
+
+  # CAE mesh
+  node_count: 482_113
+  element_count: 291_004
+  element_types: {C3D10: 285_221, C3D4: 5_783}
+
+  # CAE results
+  peak_von_mises_mpa: 278.4
+  max_deflection_mm: 1.237
+  probe_node_12847_stress_mpa: 142.6
+
+  # Text decks (canonicalize: strip comments, timestamps, author blocks)
+  inp_canonical_sha256: "a3c9…"
+  ```
+  A developer CI job can run the text deck, compute the same scalars, assert equality. No CAD license required for the assertion.
+- **`DECISIONS.md`** — 3–8 short entries per eval, one per meaningful judgment call made during hand-production: which ends were fixed, why this element size, why not contact, what was tried and rejected. This is the "if you can describe the decisions, you built it right" self-test captured on disk so the developer can read it without cornering the expert. Example entries:
+  > - **Suppressed fastener bores before filleting** — otherwise the 2mm fillets spilled into bore edges.
+  > - **Picked 0.3mm element size at the volute tongue** — 2mm skipped the stress concentration; tried 0.5mm, still under-resolved.
+  > - **Kept thermal pads as separate bodies** — merging corrupts thermal resistance (R = t/kA) even at 0.1mm thickness change.
 - **`REPRODUCE.md`** — a short (5–10 line) plain-English recipe: open X → do Y → expect Z. Names every artifact the reviewer has to touch.
 - **`geometry.step`** (CAD evals only) — supplementary neutral export. Forensic artifact only; never the reference.
 - **3–5 reference screenshots** of key views — PNG files that let a reviewer without a license sanity-check the end state.
 
 > **Reproduction bar.** Another engineer who has the tool installed must be able to open the `expected/` folder and reproduce the end state in under 30 minutes of wall-clock work, using only what is in the folder. If they have to email you to ask how it was built, the bundle is incomplete.
+
+**Anonymization before handoff.** Native files silently carry machine state that breaks the bundle when a developer opens it on a different machine. Run this checklist before committing `expected/`:
+
+- [ ] All absolute filesystem paths in the native file converted to relative or removed (material library refs, linked parts, image textures)
+- [ ] No network-drive references (`\\server\share`, mapped drive letters)
+- [ ] License tokens, Teamcenter / PLM IDs, Windchill metadata stripped
+- [ ] User profile leakage scrubbed — author name, machine name, company name in the document properties
+- [ ] Custom material databases either inlined into the file or replaced with the tool's built-in materials
+- [ ] Custom units systems reset to the tool default (or the default is named in `environment.yaml` and justified)
+- [ ] Macros / addins / custom toolbars relied on during production are named in `environment.yaml` (so the developer knows what is missing if things behave differently)
+- [ ] Anything that identifies a real customer or project — company logos, part numbers matching a public catalog, drawing title blocks with real names — replaced with synthetic values
+
+Without this pass, a bundle that opens perfectly on the expert's machine will mysteriously fail on the developer's machine, and the failure mode will look like a tool bug rather than a missing dependency.
 
 **How you produce the native file.** Open the `input/` file in the target software and **do the task by hand** — the same way you would complete it on a normal working day with no agent involved. Click through the feature tree, create the new features, suppress or delete what the task requires, apply the material or mesh controls, place the boundary conditions, run the solve, save. If the task takes four hours of hand work to complete correctly, then producing the reference file takes four hours. The native file must be the result of real practitioner work inside the application — not a scripted batch operation, not a macro replay, not a derivation from a STEP re-import. The product of that manual session is what the agent's output is compared against. The solver deck, results, and screenshots are then exported from that same session to complete the bundle.
 

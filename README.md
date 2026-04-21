@@ -42,7 +42,7 @@ nexus-evals/
 | Folder | What it contains | When written | Multiplicity |
 |---|---|---|---|
 | `input/` | Starting state — the **native program file** (e.g., `.sldprt`, `.cae`, `.mph`) the agent opens along with `prompt.txt` | When the eval is authored | One immutable set |
-| `expected/` | **Runnable reproduction bundle**: native program file + solver deck or journal (when the tool has one) + reference results + `tool_version.txt` + `REPRODUCE.md` + 3–5 screenshots. The native file is produced by the expert performing the task by hand in the target software, as they would without any agent. See [EXPERT_GUIDE.md](EXPERT_GUIDE.md) §End-File Package for the per-tool artifact list | When the eval is authored | One immutable set |
+| `expected/` | **Runnable reproduction bundle**: native program file + text solver deck or journal (required where the tool has one) + reference results + `environment.yaml` + `fingerprint.yaml` + `DECISIONS.md` + `REPRODUCE.md` + 3–5 screenshots. The native file is produced by the expert performing the task by hand in the target software, as they would without any agent. See [EXPERT_GUIDE.md](EXPERT_GUIDE.md) §End-File Package for the per-tool artifact list and pre-handoff anonymization checklist | When the eval is authored | One immutable set |
 | `results/run-YYYY-MM-DD/` | A single run's artifacts: the agent's **native program file** plus screenshots, logs, and evaluator score | Every eval run | Many, grows over time |
 
 #### The end state must be the native program file, not a neutral export
